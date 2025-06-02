@@ -34,7 +34,7 @@ public class AdminHomePage extends javax.swing.JFrame {
         public static final String INVOICE_LOOKUP_ICON = ICON_PATH_PREFIX + "digital-services.png";
         public static final String VEHICLE_ACCESS_ICON = ICON_PATH_PREFIX + "vehicle_access.png";
         public static final String REPORT_STATS_ICON = ICON_PATH_PREFIX + "report_stats.png";
-        public static final String VEHICLE_MANAGEMENT_ICON = ICON_PATH_PREFIX + "vehicle_management.png";
+        public static final String VEHICLE_MANAGEMENT_ICON = ICON_PATH_PREFIX + "vehicle_management.png"; // Icon này sẽ không còn được sử dụng
         public static final String PERSONNEL_MANAGEMENT_ICON = ICON_PATH_PREFIX + "management.png";
     }
 
@@ -93,7 +93,7 @@ public class AdminHomePage extends javax.swing.JFrame {
         headerPanel.setLayout(new BorderLayout(20, 0));
         headerPanel.setBackground(UIConstants.HEADER_BACKGROUND);
         headerPanel.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Color.LIGHT_GRAY));
-        headerPanel.setPreferredSize(new Dimension(getWidth(), 90)); // Sử dụng getWidth() động có thể không tốt nếu frame chưa được packed/shown
+        headerPanel.setPreferredSize(new Dimension(getWidth(), 90));
         headerPanel.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
 
         JPanel avatarPanel = new JPanel(new BorderLayout());
@@ -172,29 +172,28 @@ public class AdminHomePage extends javax.swing.JFrame {
 
     private void createMenuPanel() {
         menuPanel = new JPanel();
-        menuPanel.setLayout(new GridLayout(2, 5, 15, 15));
+        // Thay đổi layout thành 2 hàng, 4 cột
+        menuPanel.setLayout(new GridLayout(2, 4, 15, 15));
         menuPanel.setBackground(UIConstants.BACKGROUND_COLOR);
 
+        // Xóa "Quản lý xe" và "" (phần tử trống)
         String[] menuTitles = {
-                "Quản lý khách hàng", "Quản lý tài khoản nhân viên", "Quản lý sự cố", "Quản lý thiết bị bảo dưỡng", "Quản lý dịch vụ",
-                "Quản lý xe ra vào", "Quản lý doanh thu & Thống kê", "Quản lý xe", "Quản lý nhân sự bãi xe", ""
+                "Quản lý khách hàng", "Quản lý tài khoản nhân viên", "Quản lý sự cố", "Quản lý thiết bị bảo dưỡng",
+                "Quản lý dịch vụ", "Quản lý xe ra vào", "Quản lý doanh thu & Thống kê", "Quản lý nhân sự bãi xe"
         };
 
+        // Xóa icon tương ứng với "Quản lý xe" (UIConstants.VEHICLE_MANAGEMENT_ICON) và ""
         String[] menuIcons = {
                 UIConstants.CUSTOMER_MANAGEMENT_ICON, UIConstants.EMPLOYEE_MANAGEMENT_ICON,
                 UIConstants.TICKET_LOOKUP_ICON, UIConstants.MAINTENANCE_EQUIPMENT_ICON,
                 UIConstants.INVOICE_LOOKUP_ICON, UIConstants.VEHICLE_ACCESS_ICON,
-                UIConstants.REPORT_STATS_ICON, UIConstants.VEHICLE_MANAGEMENT_ICON,
-                UIConstants.PERSONNEL_MANAGEMENT_ICON, ""
+                UIConstants.REPORT_STATS_ICON, UIConstants.PERSONNEL_MANAGEMENT_ICON
         };
 
         for (int i = 0; i < menuTitles.length; i++) {
-            if (menuTitles[i].isEmpty()) {
-                menuPanel.add(new JPanel(){{setOpaque(false);}});
-            } else {
-                JPanel menuItemPanel = createMenuItem(menuTitles[i], menuIcons[i]);
-                menuPanel.add(menuItemPanel);
-            }
+            // Không cần kiểm tra isEmpty nữa vì đã xóa phần tử trống
+            JPanel menuItemPanel = createMenuItem(menuTitles[i], menuIcons[i]);
+            menuPanel.add(menuItemPanel);
         }
     }
 
@@ -233,54 +232,45 @@ public class AdminHomePage extends javax.swing.JFrame {
 
             @Override
             public void mouseClicked(MouseEvent e) {
-                // setVisible(false); // Cân nhắc việc ẩn/dispose ở đây
-                String currentTitle = title; // Sử dụng biến local để tránh thay đổi title trong lambda/inner class
-                System.out.println("Clicked on: " + currentTitle); // Debug
+                String currentTitle = title;
+                System.out.println("Clicked on: " + currentTitle);
                 
-                // Tạm thời đóng cửa sổ hiện tại trước khi mở cửa sổ mới
-                // Điều này giúp tránh việc có nhiều cửa sổ AdminHomePage mở cùng lúc nếu không được quản lý cẩn thận
-                // AdminHomePage.this.dispose(); // hoặc setVisible(false) nếu bạn muốn quay lại sau
-
                 switch (currentTitle) {
                     case "Quản lý tài khoản nhân viên":
-                        new QuanLyTaiKhoanNhanVien().setVisible(true);
+                         new QuanLyTaiKhoanNhanVien().setVisible(true); // Giả sử class này tồn tại
                         AdminHomePage.this.dispose();
                         break;
                     case "Quản lý khách hàng":
-                        new QuanLyKhachHang().setVisible(true);
+                         new QuanLyKhachHang().setVisible(true); // Giả sử class này tồn tại
                         AdminHomePage.this.dispose();
                         break;
                     case "Quản lý xe ra vào":
-                         new QuanLyXeRaVao().setVisible(true);
-                        AdminHomePage.this.dispose();
-                        break;
-                    case "Quản lý xe":
-                         new QuanLyXe().setVisible(true);
+                         new QuanLyXeRaVao().setVisible(true); // Giả sử class này tồn tại
                         AdminHomePage.this.dispose();
                         break;
                     case "Quản lý thiết bị bảo dưỡng":
-                         new QuanLyThietBiBaoDuong().setVisible(true);
+                         new QuanLyThietBiBaoDuong().setVisible(true); // Giả sử class này tồn tại
                         AdminHomePage.this.dispose();
                         break;
                     case "Quản lý doanh thu & Thống kê":
-                         new QuanLyDoanhThuVaThongKe().setVisible(true);
+                         new QuanLyDoanhThuVaThongKe().setVisible(true); // Giả sử class này tồn tại
                         AdminHomePage.this.dispose();
                         break;
                     case "Quản lý sự cố":
-                         new QuanLySuCo(AdminHomePage.this).setVisible(true);
-                         AdminHomePage.this.setVisible(false); // Ẩn thay vì dispose nếu cần quay lại
+                         new QuanLySuCo(AdminHomePage.this).setVisible(true); // Giả sử class này tồn tại
+                        AdminHomePage.this.setVisible(false);
                         break;
                     case "Quản lý dịch vụ":
-                         new QuanLyDichVu(AdminHomePage.this).setVisible(true);
-                         AdminHomePage.this.setVisible(false);
+                         new QuanLyDichVu(AdminHomePage.this).setVisible(true); // Giả sử class này tồn tại
+                        AdminHomePage.this.setVisible(false);
                         break;
                     case "Quản lý nhân sự bãi xe":
-                         new QuanLyNhanSuBaiXe(AdminHomePage.this).setVisible(true);
-                         AdminHomePage.this.setVisible(false);
+                         new QuanLyNhanSuBaiXe(AdminHomePage.this).setVisible(true); // Giả sử class này tồn tại
+                        AdminHomePage.this.setVisible(false);
                         break;
                     default:
                         JOptionPane.showMessageDialog(AdminHomePage.this, "Bạn đã nhấp vào: " + currentTitle);
-                         AdminHomePage.this.setVisible(true); // Hiển thị lại nếu không có điều hướng
+                        AdminHomePage.this.setVisible(true);
                 }
             }
         });
@@ -288,7 +278,6 @@ public class AdminHomePage extends javax.swing.JFrame {
     }
     
     public static void main(String args[]) {
-        // Yêu cầu FlatLaf không sử dụng visual padding liên quan đến MigLayout
         System.setProperty("flatlaf.useVisualPadding", "false");
         try {
             UIManager.setLookAndFeel(new FlatLightLaf());
@@ -298,7 +287,7 @@ public class AdminHomePage extends javax.swing.JFrame {
 
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                new AdminHomePage().setVisible(true); // Hiển thị frame ở đây
+                new AdminHomePage().setVisible(true);
             }
         });
     }

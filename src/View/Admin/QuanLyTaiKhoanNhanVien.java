@@ -55,7 +55,7 @@ public class QuanLyTaiKhoanNhanVien extends javax.swing.JFrame {
     private JTextField txtEmail;    // Cho phép sửa
     private JTextField txtMaNhanVienDisplay;
     private JPasswordField txtNewPassword;
-    private JComboBox<String> cmbAccountStatus;
+    // private JComboBox<String> cmbAccountStatus; // REMOVED
     private JTextField txtRoleDisplay;
 
     private JTextField txtSearch;
@@ -166,7 +166,7 @@ public class QuanLyTaiKhoanNhanVien extends javax.swing.JFrame {
         inputFormPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Thông tin tài khoản nhân viên",
                 javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION,
                 UIStyleConstants.BOLD_FONT, UIStyleConstants.PRIMARY_COLOR));
-        inputFormPanel.setPreferredSize(new Dimension(0, 220));
+        inputFormPanel.setPreferredSize(new Dimension(0, 220)); // You might want to adjust height after removing a row
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(8, 12, 8, 12);
@@ -213,14 +213,18 @@ public class QuanLyTaiKhoanNhanVien extends javax.swing.JFrame {
         txtNewPassword.setFont(UIStyleConstants.PLAIN_FONT);
         inputFormPanel.add(txtNewPassword, gbc);
 
-        gbc.gridx = 2; gbc.fill = GridBagConstraints.NONE; gbc.weightx = 0.0;
-        inputFormPanel.add(new JLabel("Trạng thái TK:"), gbc);
-        gbc.gridx = 3; gbc.fill = GridBagConstraints.HORIZONTAL; gbc.weightx = 1.0;
-        cmbAccountStatus = new JComboBox<>(new String[]{"ACTIVE", "INACTIVE"});
-        cmbAccountStatus.setFont(UIStyleConstants.PLAIN_FONT);
-        inputFormPanel.add(cmbAccountStatus, gbc);
+        // REMOVED "Trạng thái TK" Label and ComboBox
+        // gbc.gridx = 2; gbc.fill = GridBagConstraints.NONE; gbc.weightx = 0.0;
+        // inputFormPanel.add(new JLabel("Trạng thái TK:"), gbc);
+        // gbc.gridx = 3; gbc.fill = GridBagConstraints.HORIZONTAL; gbc.weightx = 1.0;
+        // cmbAccountStatus = new JComboBox<>(new String[]{"ACTIVE", "INACTIVE"});
+        // cmbAccountStatus.setFont(UIStyleConstants.PLAIN_FONT);
+        // inputFormPanel.add(cmbAccountStatus, gbc);
 
-        gbc.gridy++;
+        gbc.gridy++; // This gbc.gridy++ might need adjustment if the above row was fully cleared and you want to use that row
+                     // However, since "Mật khẩu mới" is still on the previous gbc.gridy, this new gbc.gridy++ is for "Vai trò" on a new line.
+                     // If "Mật khẩu mới" was alone on its line and took full width, then this gbc.gridy could be the same as "Mật khẩu mới" gbc.gridy
+                     // For now, keeping "Vai trò" on its own line below "Mật khẩu mới" as per original structure.
         gbc.gridx = 0; gbc.fill = GridBagConstraints.NONE; gbc.weightx = 0.0;
         inputFormPanel.add(new JLabel("Vai trò:"), gbc);
         gbc.gridx = 1; gbc.fill = GridBagConstraints.HORIZONTAL; gbc.weightx = 1.0;
@@ -228,6 +232,13 @@ public class QuanLyTaiKhoanNhanVien extends javax.swing.JFrame {
         txtRoleDisplay.setFont(UIStyleConstants.PLAIN_FONT);
         txtRoleDisplay.setEditable(false);
         inputFormPanel.add(txtRoleDisplay, gbc);
+        
+        // Optionally, to make "Mật khẩu mới" take up the space previously used by "Trạng thái TK"
+        // You would need to adjust the gbc for txtNewPassword after it's added:
+        // GridBagConstraints gbcForPass = ((GridBagLayout)inputFormPanel.getLayout()).getConstraints(txtNewPassword);
+        // gbcForPass.gridwidth = 3; // To span across the label and field of "Trạng thái TK"
+        // ((GridBagLayout)inputFormPanel.getLayout()).setConstraints(txtNewPassword, gbcForPass);
+        // For now, I'm keeping it simple by just removing the components.
     }
 
     private void createButtonPanel() {
@@ -427,7 +438,7 @@ public class QuanLyTaiKhoanNhanVien extends javax.swing.JFrame {
         txtMaNhanVienDisplay.setText("");
         txtRoleDisplay.setText("");
         txtNewPassword.setText("");
-        cmbAccountStatus.setSelectedIndex(0);
+        // cmbAccountStatus.setSelectedIndex(0); // REMOVED
         accountTable.clearSelection();
         txtFullName.requestFocus(); // Focus vào trường Họ tên vì Username không sửa được
     }
@@ -442,7 +453,7 @@ public class QuanLyTaiKhoanNhanVien extends javax.swing.JFrame {
         String newFullName = txtFullName.getText().trim();
         String newEmail = txtEmail.getText().trim();
         String newPassword = new String(txtNewPassword.getPassword()).trim();
-        String accountStatus = (String) cmbAccountStatus.getSelectedItem();
+        // String accountStatus = (String) cmbAccountStatus.getSelectedItem(); // REMOVED
 
         if (newFullName.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Họ và tên không được để trống!", "Lỗi", JOptionPane.ERROR_MESSAGE);
@@ -454,10 +465,11 @@ public class QuanLyTaiKhoanNhanVien extends javax.swing.JFrame {
             txtEmail.requestFocus();
             return;
         }
-        if (accountStatus == null || accountStatus.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Trạng thái tài khoản không hợp lệ!", "Lỗi", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
+        // REMOVED accountStatus validation
+        // if (accountStatus == null || accountStatus.isEmpty()) {
+        //     JOptionPane.showMessageDialog(this, "Trạng thái tài khoản không hợp lệ!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+        //     return;
+        // }
 
         Connection conn = null;
         try {
@@ -473,23 +485,27 @@ public class QuanLyTaiKhoanNhanVien extends javax.swing.JFrame {
                 pstmtUsers.executeUpdate();
             }
 
-            // 2. Cập nhật bảng ACCOUNT (status và password nếu có)
+            // 2. Cập nhật bảng ACCOUNT (password nếu có, và UPDATED_AT. STATUS is NOT updated here anymore)
             String sqlUpdateAccount;
             boolean updatePassword = !newPassword.isEmpty();
 
             if (updatePassword) {
-                sqlUpdateAccount = "UPDATE ACCOUNT SET STATUS = ?, PASSWORD_HASH = ?, UPDATED_AT = SYSDATE WHERE ACCOUNT_ID = ? AND IS_DELETED = 0";
+                // Update password and UPDATED_AT
+                sqlUpdateAccount = "UPDATE ACCOUNT SET PASSWORD_HASH = ?, UPDATED_AT = SYSDATE WHERE ACCOUNT_ID = ? AND IS_DELETED = 0";
             } else {
-                sqlUpdateAccount = "UPDATE ACCOUNT SET STATUS = ?, UPDATED_AT = SYSDATE WHERE ACCOUNT_ID = ? AND IS_DELETED = 0";
+                // Only update UPDATED_AT as other user details (FULL_NAME, EMAIL) have changed in USERS table.
+                // No change to password or status from this form.
+                sqlUpdateAccount = "UPDATE ACCOUNT SET UPDATED_AT = SYSDATE WHERE ACCOUNT_ID = ? AND IS_DELETED = 0";
             }
 
             try (PreparedStatement pstmtAccount = conn.prepareStatement(sqlUpdateAccount)) {
-                pstmtAccount.setString(1, accountStatus);
                 if (updatePassword) {
-                    pstmtAccount.setString(2, hashPassword(newPassword));
-                    pstmtAccount.setInt(3, selectedAccountId);
+                    // pstmtAccount.setString(1, accountStatus); // REMOVED status update
+                    pstmtAccount.setString(1, hashPassword(newPassword)); // Parameter index shifted
+                    pstmtAccount.setInt(2, selectedAccountId);       // Parameter index shifted
                 } else {
-                    pstmtAccount.setInt(2, selectedAccountId);
+                    // pstmtAccount.setString(1, accountStatus); // REMOVED status update
+                    pstmtAccount.setInt(1, selectedAccountId);       // Parameter index shifted (only account_id for where clause)
                 }
                 pstmtAccount.executeUpdate();
             }
@@ -545,7 +561,16 @@ public class QuanLyTaiKhoanNhanVien extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(this, "Vui lòng chọn một tài khoản để vô hiệu hóa!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
             return;
         }
-        String currentRole = txtRoleDisplay.getText();
+
+        int selectedRow = accountTable.getSelectedRow();
+        if (selectedRow == -1) { // Should not happen if selectedAccountId is valid, but good practice
+            JOptionPane.showMessageDialog(this, "Không có tài khoản nào được chọn trong bảng.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        String currentRole = txtRoleDisplay.getText(); // Role from the form (populated by displaySelectedAccount)
+        String currentStatusInTable = (String) tableModel.getValueAt(selectedRow, 7); // Get status from table model
+
+
         if (RoleGroupConstants.ADMIN.equals(currentRole)) {
             int activeAdminCount = 0;
             try (Connection conn = ConnectionOracle.getOracleConnection();
@@ -564,7 +589,8 @@ public class QuanLyTaiKhoanNhanVien extends javax.swing.JFrame {
                 JOptionPane.showMessageDialog(this, "Lỗi khi kiểm tra số lượng Admin: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
                 return;
             }
-            if (activeAdminCount <= 1 && cmbAccountStatus.getSelectedItem().equals("ACTIVE")) { // Chỉ kiểm tra nếu admin đang active
+            // Check if the admin being deleted is currently ACTIVE
+            if (activeAdminCount <= 1 && "ACTIVE".equals(currentStatusInTable)) { // MODIFIED: Use status from table
                 JOptionPane.showMessageDialog(this, "Không thể vô hiệu hóa tài khoản ADMIN cuối cùng đang hoạt động!", "Lỗi", JOptionPane.ERROR_MESSAGE);
                 return;
             }
@@ -585,7 +611,7 @@ public class QuanLyTaiKhoanNhanVien extends javax.swing.JFrame {
                     loadAccountData(txtSearch.getText().trim());
                     clearForm();
                 } else {
-                    JOptionPane.showMessageDialog(this, "Vô hiệu hóa tài khoản thất bại.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(this, "Vô hiệu hóa tài khoản thất bại. Tài khoản có thể đã bị xóa hoặc không tồn tại.", "Lỗi", JOptionPane.ERROR_MESSAGE);
                 }
             } catch (SQLException | ClassNotFoundException e) {
                 JOptionPane.showMessageDialog(this, "Lỗi khi vô hiệu hóa tài khoản: " + e.getMessage(), "Lỗi SQL", JOptionPane.ERROR_MESSAGE);
@@ -604,7 +630,7 @@ public class QuanLyTaiKhoanNhanVien extends javax.swing.JFrame {
             txtFullName.setText((String) tableModel.getValueAt(selectedRow, 4));
             txtEmail.setText((String) tableModel.getValueAt(selectedRow, 5));
             txtRoleDisplay.setText((String) tableModel.getValueAt(selectedRow, 6));
-            cmbAccountStatus.setSelectedItem((String) tableModel.getValueAt(selectedRow, 7));
+            // cmbAccountStatus.setSelectedItem((String) tableModel.getValueAt(selectedRow, 7)); // REMOVED
             txtMaNhanVienDisplay.setText((String) tableModel.getValueAt(selectedRow, 8));
             txtNewPassword.setText("");
 

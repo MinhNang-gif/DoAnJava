@@ -19,8 +19,8 @@ public class GioHang extends javax.swing.JFrame {
     // --- UI Styling Constants ---
     private final Color HEADER_BACKGROUND = new Color(70, 130, 180);
     private final Color WHITE_COLOR = Color.WHITE;
-    private final Color LIGHT_TABLE_HEADER = new Color(235, 240, 245); 
-    private final Color BORDER_COLOR = new Color(200, 200, 200); 
+    private final Color LIGHT_TABLE_HEADER = new Color(235, 240, 245);
+    private final Color BORDER_COLOR = new Color(200, 200, 200);
 
     private final Font TITLE_FONT = new Font("Arial", Font.BOLD, 22);
     private final Font REGULAR_FONT = new Font("Arial", Font.PLAIN, 14);
@@ -45,7 +45,7 @@ public class GioHang extends javax.swing.JFrame {
         initComponentsCustom();
         loadPurchasedTicketsHistory();
     }
-    
+
     private void initComponentsCustom() {
         // Main Panel
         JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
@@ -86,7 +86,7 @@ public class GioHang extends javax.swing.JFrame {
         centerRenderer.setHorizontalAlignment(JLabel.CENTER);
         DefaultTableCellRenderer rightRenderer = new DefaultTableCellRenderer();
         rightRenderer.setHorizontalAlignment(JLabel.RIGHT);
-        
+
         TableColumnModel columnModel = historyTable.getColumnModel();
         columnModel.getColumn(0).setPreferredWidth(200); // Tên Vé
         columnModel.getColumn(1).setCellRenderer(centerRenderer); // Số lượng
@@ -97,7 +97,7 @@ public class GioHang extends javax.swing.JFrame {
         columnModel.getColumn(3).setPreferredWidth(120);
         columnModel.getColumn(4).setCellRenderer(centerRenderer); // Ngày Mua
         columnModel.getColumn(4).setPreferredWidth(150);
-        
+
         DefaultTableCellRenderer currencyRenderer = new DefaultTableCellRenderer() {
             final NumberFormat formatter = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
             @Override
@@ -121,12 +121,12 @@ public class GioHang extends javax.swing.JFrame {
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
         buttonPanel.setBackground(WHITE_COLOR);
 
-        JButton clearHistoryButton = new JButton("Xóa Lịch Sử");
-        clearHistoryButton.setFont(BOLD_FONT.deriveFont(13f));
-        clearHistoryButton.setBackground(new Color(220, 53, 69));
-        clearHistoryButton.setForeground(WHITE_COLOR);
-        clearHistoryButton.setIcon(loadIcon("delete_bin.png", 16, 16)); // Thêm icon
-        clearHistoryButton.addActionListener(e -> clearPurchasedTicketsHistory());
+        //JButton clearHistoryButton = new JButton("Xóa Lịch Sử"); // Removed this button
+        //clearHistoryButton.setFont(BOLD_FONT.deriveFont(13f));
+        //clearHistoryButton.setBackground(new Color(220, 53, 69));
+        //clearHistoryButton.setForeground(WHITE_COLOR);
+        //clearHistoryButton.setIcon(loadIcon("delete_bin.png", 16, 16)); // Thêm icon
+        //clearHistoryButton.addActionListener(e -> clearPurchasedTicketsHistory()); // Removed ActionListener
 
         JButton backButton = new JButton("Quay Lại Trang Chủ");
         backButton.setFont(BOLD_FONT.deriveFont(13f));
@@ -137,7 +137,7 @@ public class GioHang extends javax.swing.JFrame {
             }
         });
 
-        buttonPanel.add(clearHistoryButton);
+        //buttonPanel.add(clearHistoryButton); // Removed adding button
         buttonPanel.add(backButton);
         mainPanel.add(buttonPanel, BorderLayout.SOUTH);
 
@@ -150,7 +150,7 @@ public class GioHang extends javax.swing.JFrame {
 
     public void loadPurchasedTicketsHistory() {
         if (ownerFrame == null) return;
-        
+
         List<LichSuVeDaMua> history = ownerFrame.getPurchasedTicketsForCurrentUser(); // Sử dụng phương thức mới
         tableModel.setRowCount(0);
         if (history != null) {
@@ -166,22 +166,23 @@ public class GioHang extends javax.swing.JFrame {
         }
     }
 
-    public void clearPurchasedTicketsHistory() {
-        if (ownerFrame == null) return;
+    // Removed clearPurchasedTicketsHistory() method
+    // public void clearPurchasedTicketsHistory() {
+    //     if (ownerFrame == null) return;
+    //
+    //     int confirmation = JOptionPane.showConfirmDialog(this.ownerFrame, // Hiển thị dialog trên ownerFrame
+    //             "Bạn có chắc chắn muốn xóa toàn bộ lịch sử mua vé không?",
+    //             "Xác nhận xóa lịch sử",
+    //             JOptionPane.YES_NO_OPTION,
+    //             JOptionPane.WARNING_MESSAGE);
+    //
+    //     if (confirmation == JOptionPane.YES_OPTION) {
+    //         ownerFrame.clearPurchasedTicketsHistoryForCurrentUser(); // Sử dụng phương thức mới
+    //         loadPurchasedTicketsHistory();
+    //         // ownerFrame.showGlobalNotification("Lịch sử mua vé đã được xóa.", "INFO"); // CustomerHomePage đã có thông báo
+    //     }
+    // }
 
-        int confirmation = JOptionPane.showConfirmDialog(this.ownerFrame, // Hiển thị dialog trên ownerFrame
-                "Bạn có chắc chắn muốn xóa toàn bộ lịch sử mua vé không?",
-                "Xác nhận xóa lịch sử",
-                JOptionPane.YES_NO_OPTION,
-                JOptionPane.WARNING_MESSAGE);
-
-        if (confirmation == JOptionPane.YES_OPTION) {
-            ownerFrame.clearPurchasedTicketsHistoryForCurrentUser(); // Sử dụng phương thức mới
-            loadPurchasedTicketsHistory();
-            // ownerFrame.showGlobalNotification("Lịch sử mua vé đã được xóa.", "INFO"); // CustomerHomePage đã có thông báo
-        }
-    }
-    
     private ImageIcon loadIcon(String iconName, int width, int height) {
         // Copy hàm loadIcon từ CustomerHomePage hoặc tạo một lớp tiện ích chung
         String resourcePath = "/icons/" + iconName;
@@ -203,11 +204,11 @@ public class GioHang extends javax.swing.JFrame {
             UserToken testToken = new UserToken();
             testToken.setEntityId("TEST_USER_GH"); testToken.setEntityFullName("Test User GioHang");
             testToken.setAccountId(102); testToken.setRole(RoleGroupConstants.CUSTOMER);
-            
+
             CustomerHomePage fakeOwner = new CustomerHomePage(testToken);
             fakeOwner.addPurchasedTicketForCurrentUser(new LichSuVeDaMua("Vé Ngày Xe Máy", 2, 3000, 6000));
             fakeOwner.addPurchasedTicketForCurrentUser(new LichSuVeDaMua("Vé Tuần Ô Tô", 1, 25000, 25000));
-            
+
             // Thay vì new GioHang(...).setVisible(true) nếu dùng CardLayout
             // Thì sẽ add contentPane của GioHang vào CardLayout của CustomerHomePage
             // Test hiển thị độc lập:

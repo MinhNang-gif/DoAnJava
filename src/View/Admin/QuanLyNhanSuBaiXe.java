@@ -25,31 +25,30 @@ public class QuanLyNhanSuBaiXe extends javax.swing.JFrame {
 
     private JTabbedPane tabbedPane;
     private JPanel shiftManagementPanel;
-    private JPanel personnelReportPanel;
+    // private JPanel personnelReportPanel; // Removed
 
     private JTextField txtMaCa, txtSearchMaNV, txtSearchTenNV;
     private JComboBox<NhanVienDTO> cmbNhanVien;
     private JDateChooser dateNgayLam, dateSearchNgayLam;
     private JSpinner timeGioBatDau, timeGioKetThuc;
-    private JButton btnThemCa, btnSuaCa, btnXoaCa, btnLamMoiForm, btnTimKiemCa, btnResetTimKiem, btnGenerateMaCa; // Added btnGenerateMaCa here
+    private JButton btnThemCa, btnSuaCa, btnXoaCa, btnLamMoiForm, btnTimKiemCa, btnResetTimKiem, btnGenerateMaCa;
     private JTable tblCaLamViec;
     private DefaultTableModel modelCaLamViec;
 
-    private JComboBox<String> cmbReportType;
-    private JDateChooser dateReportNgay;
-    private JButton btnXemBaoCao;
-    private DefaultTableModel modelBaoCao;
-    private JTable tblBaoCao;
-    private JButton btnQuayLai; // Declare here for styling
+    // Removed UI components for Personnel Report Panel
+    // private JComboBox<String> cmbReportType;
+    // private JDateChooser dateReportNgay;
+    // private JButton btnXemBaoCao;
+    // private DefaultTableModel modelBaoCao;
+    // private JTable tblBaoCao;
+    private JButton btnQuayLai;
 
     private SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
     private SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ss");
     private SimpleDateFormat dateTimeFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
 
-    // Định nghĩa màu sắc cho nút
     private static final Color COLOR_PRIMARY_ACTION = new Color(0, 120, 215);
-    private static final Color COLOR_SECONDARY_ACTION = new Color(108, 117, 125); // Bootstrap's secondary color (gray)
-    // Hoặc một màu xanh nhạt hơn: private static final Color COLOR_SECONDARY_ACTION = new Color(70, 130, 180); // SteelBlue
+    private static final Color COLOR_SECONDARY_ACTION = new Color(108, 117, 125);
     private static final Color COLOR_BUTTON_TEXT = Color.WHITE;
 
 
@@ -76,7 +75,7 @@ public class QuanLyNhanSuBaiXe extends javax.swing.JFrame {
             System.err.println("Failed to initialize LaF: " + ex.getMessage());
         }
 
-        setTitle("Quản Lý Nhân Sự Bãi Xe");
+        setTitle("Quản Lý Ca Làm Việc Nhân Sự Bãi Xe"); // Title updated slightly as only one tab now
         setSize(1100, 750);
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         setLocationRelativeTo(null);
@@ -89,20 +88,26 @@ public class QuanLyNhanSuBaiXe extends javax.swing.JFrame {
             }
         });
 
+        // If only one panel, JTabbedPane might be an overkill,
+        // but keeping it for now in case user wants to add other tabs later.
+        // If strictly one view, could replace tabbedPane with shiftManagementPanel directly.
         tabbedPane = new JTabbedPane();
 
         createShiftManagementPanel();
+        // Changed to add directly if no other tabs, or keep tabbedPane for future extensibility.
+        // For this request, we'll keep the tabbedPane and add the single tab.
         tabbedPane.addTab("Quản Lý Ca Làm Việc", null, shiftManagementPanel, "Quản lý thêm, sửa, xóa, tìm kiếm ca làm việc");
 
-        createPersonnelReportPanel();
-        tabbedPane.addTab("Báo Cáo Tình Trạng Nhân Sự", null, personnelReportPanel, "Xem báo cáo tình trạng nhân sự");
+        // Removed Personnel Report Panel tab
+        // createPersonnelReportPanel();
+        // tabbedPane.addTab("Báo Cáo Tình Trạng Nhân Sự", null, personnelReportPanel, "Xem báo cáo tình trạng nhân sự");
 
         add(tabbedPane, BorderLayout.CENTER);
 
         JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         bottomPanel.setBorder(new EmptyBorder(5, 0, 5, 10));
-        btnQuayLai = new JButton("Quay Lại Trang Chủ"); // Khởi tạo ở đây
-        styleButton(btnQuayLai, COLOR_SECONDARY_ACTION, COLOR_BUTTON_TEXT); // Áp dụng style
+        btnQuayLai = new JButton("Quay Lại Trang Chủ");
+        styleButton(btnQuayLai, COLOR_SECONDARY_ACTION, COLOR_BUTTON_TEXT);
         btnQuayLai.addActionListener(e -> closeFrame());
         bottomPanel.add(btnQuayLai);
         add(bottomPanel, BorderLayout.SOUTH);
@@ -114,11 +119,9 @@ public class QuanLyNhanSuBaiXe extends javax.swing.JFrame {
     private void styleButton(JButton button, Color backgroundColor, Color foregroundColor) {
         button.setBackground(backgroundColor);
         button.setForeground(foregroundColor);
-        button.setFocusPainted(false); // Tắt viền focus để trông gọn hơn
-        // button.setBorder(BorderFactory.createEmptyBorder(5, 15, 5, 15)); // Thêm padding nếu cần
-        // UIManager.put("Button.arc", 6); // For rounded corners with FlatLaf, set globally or per component if possible
+        button.setFocusPainted(false);
     }
-    
+
     private void closeFrame() {
         if (adminHomePage != null) {
             adminHomePage.setVisible(true);
@@ -132,7 +135,7 @@ public class QuanLyNhanSuBaiXe extends javax.swing.JFrame {
 
         JPanel formPanel = new JPanel(new GridBagLayout());
         formPanel.setBorder(new TitledBorder("Thông Tin Ca Làm Việc"));
-        
+
         JPanel inputFieldsContainerPanel = new JPanel(new GridBagLayout());
         GridBagConstraints gbcInput = new GridBagConstraints();
         gbcInput.insets = new Insets(5, 5, 5, 5);
@@ -140,17 +143,17 @@ public class QuanLyNhanSuBaiXe extends javax.swing.JFrame {
 
         int yRow = 0;
 
-        gbcInput.gridx = 0; gbcInput.gridy = yRow; gbcInput.anchor = GridBagConstraints.EAST; 
+        gbcInput.gridx = 0; gbcInput.gridy = yRow; gbcInput.anchor = GridBagConstraints.EAST;
         inputFieldsContainerPanel.add(new JLabel("Mã Ca:"), gbcInput);
-        
+
         gbcInput.gridx = 1; gbcInput.gridy = yRow; gbcInput.anchor = GridBagConstraints.WEST; gbcInput.fill = GridBagConstraints.NONE;
         txtMaCa = new JTextField(); txtMaCa.setEditable(false);
         txtMaCa.setPreferredSize(new Dimension(180, txtMaCa.getPreferredSize().height));
         inputFieldsContainerPanel.add(txtMaCa, gbcInput);
-        
+
         gbcInput.gridx = 2; gbcInput.gridy = yRow; gbcInput.anchor = GridBagConstraints.WEST;
-        btnGenerateMaCa = new JButton("Tạo Mã"); // Khởi tạo ở đây
-        styleButton(btnGenerateMaCa, COLOR_SECONDARY_ACTION, COLOR_BUTTON_TEXT); // Áp dụng style
+        btnGenerateMaCa = new JButton("Tạo Mã");
+        styleButton(btnGenerateMaCa, COLOR_SECONDARY_ACTION, COLOR_BUTTON_TEXT);
         btnGenerateMaCa.setToolTipText("Tự động tạo mã ca làm việc");
         btnGenerateMaCa.addActionListener(e -> txtMaCa.setText("CA" + UUID.randomUUID().toString().substring(0, 8).toUpperCase()));
         inputFieldsContainerPanel.add(btnGenerateMaCa, gbcInput);
@@ -185,7 +188,7 @@ public class QuanLyNhanSuBaiXe extends javax.swing.JFrame {
         inputFieldsContainerPanel.add(timeGioBatDau, gbcInput);
         gbcInput.gridwidth = 1;
         yRow++;
-        
+
         gbcInput.gridx = 0; gbcInput.gridy = yRow; gbcInput.anchor = GridBagConstraints.EAST;
         inputFieldsContainerPanel.add(new JLabel("Giờ Kết Thúc:"), gbcInput);
         gbcInput.gridx = 1; gbcInput.gridy = yRow; gbcInput.anchor = GridBagConstraints.WEST; gbcInput.gridwidth = 2;
@@ -205,7 +208,7 @@ public class QuanLyNhanSuBaiXe extends javax.swing.JFrame {
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
         btnThemCa = new JButton("Thêm Ca"); styleButton(btnThemCa, COLOR_PRIMARY_ACTION, COLOR_BUTTON_TEXT);
         btnSuaCa = new JButton("Sửa Ca"); styleButton(btnSuaCa, COLOR_PRIMARY_ACTION, COLOR_BUTTON_TEXT);
-        btnXoaCa = new JButton("Xóa Ca"); styleButton(btnXoaCa, COLOR_PRIMARY_ACTION, COLOR_BUTTON_TEXT); // Hoặc màu đỏ nếu muốn
+        btnXoaCa = new JButton("Xóa Ca"); styleButton(btnXoaCa, COLOR_PRIMARY_ACTION, COLOR_BUTTON_TEXT);
         btnLamMoiForm = new JButton("Làm Mới Form"); styleButton(btnLamMoiForm, COLOR_SECONDARY_ACTION, COLOR_BUTTON_TEXT);
 
         buttonPanel.add(btnThemCa);
@@ -213,32 +216,32 @@ public class QuanLyNhanSuBaiXe extends javax.swing.JFrame {
         buttonPanel.add(btnXoaCa);
         buttonPanel.add(btnLamMoiForm);
 
-        JPanel searchOuterPanel = new JPanel(new GridBagLayout()); 
+        JPanel searchOuterPanel = new JPanel(new GridBagLayout());
         searchOuterPanel.setBorder(new TitledBorder("Tìm Kiếm Ca Làm Việc"));
         GridBagConstraints gbcOuterSearch = new GridBagConstraints();
         gbcOuterSearch.gridy = 0;
-        gbcOuterSearch.weightx = 1; 
+        gbcOuterSearch.weightx = 1;
 
         JPanel searchFieldsPanel = new JPanel(new GridBagLayout());
         GridBagConstraints gbcSearch = new GridBagConstraints();
         gbcSearch.insets = new Insets(5, 5, 5, 5);
-        gbcSearch.anchor = GridBagConstraints.WEST; 
+        gbcSearch.anchor = GridBagConstraints.WEST;
 
         gbcSearch.gridx = 0; gbcSearch.gridy = 0; searchFieldsPanel.add(new JLabel("Mã NV:"), gbcSearch);
         gbcSearch.gridx = 1; gbcSearch.gridy = 0; gbcSearch.fill = GridBagConstraints.HORIZONTAL; txtSearchMaNV = new JTextField(8); searchFieldsPanel.add(txtSearchMaNV, gbcSearch);
-        gbcSearch.gridx = 2; gbcSearch.gridy = 0; gbcSearch.insets = new Insets(5, 15, 5, 5); 
+        gbcSearch.gridx = 2; gbcSearch.gridy = 0; gbcSearch.insets = new Insets(5, 15, 5, 5);
         searchFieldsPanel.add(new JLabel("Tên NV:"), gbcSearch);
-        gbcSearch.insets = new Insets(5, 5, 5, 5); 
+        gbcSearch.insets = new Insets(5, 5, 5, 5);
         gbcSearch.gridx = 3; gbcSearch.gridy = 0; gbcSearch.fill = GridBagConstraints.HORIZONTAL; txtSearchTenNV = new JTextField(12); searchFieldsPanel.add(txtSearchTenNV, gbcSearch);
-        gbcSearch.gridx = 4; gbcSearch.gridy = 0; gbcSearch.insets = new Insets(5, 15, 5, 5); 
+        gbcSearch.gridx = 4; gbcSearch.gridy = 0; gbcSearch.insets = new Insets(5, 15, 5, 5);
         searchFieldsPanel.add(new JLabel("Ngày Làm:"), gbcSearch);
-        gbcSearch.insets = new Insets(5, 5, 5, 5); 
-        gbcSearch.gridx = 5; gbcSearch.gridy = 0; gbcSearch.fill = GridBagConstraints.HORIZONTAL; 
-        dateSearchNgayLam = new JDateChooser(); 
+        gbcSearch.insets = new Insets(5, 5, 5, 5);
+        gbcSearch.gridx = 5; gbcSearch.gridy = 0; gbcSearch.fill = GridBagConstraints.HORIZONTAL;
+        dateSearchNgayLam = new JDateChooser();
         dateSearchNgayLam.setDateFormatString("dd/MM/yyyy");
-        dateSearchNgayLam.setPreferredSize(new Dimension(120, dateSearchNgayLam.getPreferredSize().height)); 
+        dateSearchNgayLam.setPreferredSize(new Dimension(120, dateSearchNgayLam.getPreferredSize().height));
         searchFieldsPanel.add(dateSearchNgayLam, gbcSearch);
-        
+
         gbcOuterSearch.gridy = 0;
         searchOuterPanel.add(searchFieldsPanel, gbcOuterSearch);
 
@@ -247,15 +250,15 @@ public class QuanLyNhanSuBaiXe extends javax.swing.JFrame {
         btnResetTimKiem = new JButton("Hiện Tất Cả"); styleButton(btnResetTimKiem, COLOR_SECONDARY_ACTION, COLOR_BUTTON_TEXT);
         searchButtonsPanel.add(btnTimKiemCa);
         searchButtonsPanel.add(btnResetTimKiem);
-        
+
         gbcOuterSearch.gridy = 1;
-        gbcOuterSearch.fill = GridBagConstraints.HORIZONTAL; 
+        gbcOuterSearch.fill = GridBagConstraints.HORIZONTAL;
         searchOuterPanel.add(searchButtonsPanel, gbcOuterSearch);
 
         JPanel topPanel = new JPanel(new BorderLayout());
         topPanel.add(formPanel, BorderLayout.NORTH);
         topPanel.add(buttonPanel, BorderLayout.CENTER);
-        topPanel.add(searchOuterPanel, BorderLayout.SOUTH); 
+        topPanel.add(searchOuterPanel, BorderLayout.SOUTH);
 
         modelCaLamViec = new DefaultTableModel(new String[]{"Mã Ca", "Mã NV", "Tên Nhân Viên", "Ngày Làm", "Giờ Bắt Đầu", "Giờ Kết Thúc"}, 0){
             @Override
@@ -307,52 +310,8 @@ public class QuanLyNhanSuBaiXe extends javax.swing.JFrame {
         });
     }
 
-    private void createPersonnelReportPanel() {
-        personnelReportPanel = new JPanel(new BorderLayout(10, 10));
-        personnelReportPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
+    // Removed createPersonnelReportPanel() method
 
-        JPanel reportControlsPanel = new JPanel(new GridBagLayout()); 
-        reportControlsPanel.setBorder(new TitledBorder("Tùy Chọn Báo Cáo"));
-        GridBagConstraints gbcReport = new GridBagConstraints();
-        gbcReport.insets = new Insets(5, 5, 5, 10); 
-        gbcReport.anchor = GridBagConstraints.WEST;
-
-        gbcReport.gridx = 0; gbcReport.gridy = 0;
-        reportControlsPanel.add(new JLabel("Loại Báo Cáo:"), gbcReport);
-        gbcReport.gridx = 1; gbcReport.gridy = 0;
-        cmbReportType = new JComboBox<>(new String[]{"Nhân sự trực trong ngày", "Lịch trực theo ngày"});
-        cmbReportType.setPreferredSize(new Dimension(200, cmbReportType.getPreferredSize().height));
-        reportControlsPanel.add(cmbReportType, gbcReport);
-        gbcReport.gridx = 2; gbcReport.gridy = 0; gbcReport.insets = new Insets(5, 20, 5, 10); 
-        reportControlsPanel.add(new JLabel("Chọn Ngày:"), gbcReport);
-        gbcReport.insets = new Insets(5, 5, 5, 10); 
-        gbcReport.gridx = 3; gbcReport.gridy = 0;
-        dateReportNgay = new JDateChooser();
-        dateReportNgay.setDateFormatString("dd/MM/yyyy");
-        dateReportNgay.setDate(new Date()); 
-        dateReportNgay.setPreferredSize(new Dimension(130, dateReportNgay.getPreferredSize().height));
-        reportControlsPanel.add(dateReportNgay, gbcReport);
-        gbcReport.gridx = 4; gbcReport.gridy = 0; gbcReport.insets = new Insets(5, 20, 5, 5); 
-        btnXemBaoCao = new JButton("Xem Báo Cáo"); styleButton(btnXemBaoCao, COLOR_PRIMARY_ACTION, COLOR_BUTTON_TEXT);
-        reportControlsPanel.add(btnXemBaoCao, gbcReport);
-        gbcReport.gridx = 5; gbcReport.gridy = 0; gbcReport.weightx = 1.0;
-        reportControlsPanel.add(Box.createHorizontalGlue(), gbcReport);
-
-        modelBaoCao = new DefaultTableModel(new String[]{"Thông Tin"}, 0) {
-             @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
-            }
-        };
-        tblBaoCao = new JTable(modelBaoCao);
-        personnelReportPanel.add(reportControlsPanel, BorderLayout.NORTH);
-        personnelReportPanel.add(new JScrollPane(tblBaoCao), BorderLayout.CENTER);
-        btnXemBaoCao.addActionListener(this::generatePersonnelReportAction);
-    }
-
-    // ... (Các phương thức xử lý CSDL: loadNhanVienComboBox, loadCaLamViecTable, addCaLamViecAction, etc. giữ nguyên) ...
-    // Bạn hãy copy các phương thức này từ phiên bản trước vào đây.
-    // Để cho ngắn gọn, tôi sẽ không lặp lại chúng ở đây.
     private void loadNhanVienComboBox() {
         cmbNhanVien.removeAllItems();
         String sql = "SELECT MANHANVIEN, TENNHANVIEN FROM NHANVIEN ORDER BY TENNHANVIEN";
@@ -380,7 +339,7 @@ public class QuanLyNhanSuBaiXe extends javax.swing.JFrame {
 
         if (searchMaNV != null && !searchMaNV.trim().isEmpty()) {
             sqlBuilder.append(hasWhere ? " AND " : " WHERE ");
-            sqlBuilder.append("UPPER(c.MANHANVIEN) LIKE UPPER(?)"); 
+            sqlBuilder.append("UPPER(c.MANHANVIEN) LIKE UPPER(?)");
             params.add("%" + searchMaNV.trim() + "%");
             hasWhere = true;
         }
@@ -392,9 +351,9 @@ public class QuanLyNhanSuBaiXe extends javax.swing.JFrame {
         }
         if (searchNgay != null) {
             sqlBuilder.append(hasWhere ? " AND " : " WHERE ");
-            sqlBuilder.append("TRUNC(c.NGAYLAM) = ?"); 
+            sqlBuilder.append("TRUNC(c.NGAYLAM) = ?");
             params.add(new java.sql.Date(searchNgay.getTime()));
-            hasWhere = true;
+            // hasWhere = true; // Not needed here as it's the last condition possibility
         }
         sqlBuilder.append(" ORDER BY c.NGAYLAM DESC, c.GIOBATDAU ASC");
 
@@ -418,7 +377,7 @@ public class QuanLyNhanSuBaiXe extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(this, "Lỗi tải dữ liệu ca làm việc: " + e.getMessage(), "Lỗi CSDL", JOptionPane.ERROR_MESSAGE);
         }
     }
-    
+
     private void searchCaLamViecAction(ActionEvent e) {
         String maNV = txtSearchMaNV.getText();
         String tenNV = txtSearchTenNV.getText();
@@ -497,7 +456,7 @@ public class QuanLyNhanSuBaiXe extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(this, "Vui lòng chọn một ca để sửa.", "Lỗi", JOptionPane.ERROR_MESSAGE);
             return;
         }
-        String maCa = txtMaCa.getText().trim(); 
+        String maCa = txtMaCa.getText().trim();
          if (cmbNhanVien.getSelectedItem() == null) {
             JOptionPane.showMessageDialog(this, "Vui lòng chọn nhân viên.", "Lỗi", JOptionPane.ERROR_MESSAGE);
             return;
@@ -582,8 +541,8 @@ public class QuanLyNhanSuBaiXe extends javax.swing.JFrame {
 
     private void clearForm() {
         txtMaCa.setText("");
-        if (cmbNhanVien.getItemCount() > 0) { 
-           cmbNhanVien.setSelectedIndex(0); 
+        if (cmbNhanVien.getItemCount() > 0) {
+           cmbNhanVien.setSelectedIndex(0);
         } else {
             cmbNhanVien.setSelectedItem(null);
         }
@@ -592,84 +551,12 @@ public class QuanLyNhanSuBaiXe extends javax.swing.JFrame {
         timeGioBatDau.setValue(now);
         Calendar cal = Calendar.getInstance();
         cal.setTime(now);
-        cal.add(Calendar.HOUR_OF_DAY, 8); 
+        cal.add(Calendar.HOUR_OF_DAY, 8);
         timeGioKetThuc.setValue(cal.getTime());
         tblCaLamViec.clearSelection();
     }
 
-    private void generatePersonnelReportAction(ActionEvent e) {
-        modelBaoCao.setRowCount(0); 
-        String reportType = (String) cmbReportType.getSelectedItem();
-        Date selectedDate = dateReportNgay.getDate();
-
-        if (selectedDate == null) {
-            JOptionPane.showMessageDialog(this, "Vui lòng chọn ngày cho báo cáo.", "Lỗi", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        String sql = "";
-        List<String> columnNames = new ArrayList<>();
-
-        if ("Nhân sự trực trong ngày".equals(reportType)) {
-             sql = "SELECT n.TENNHANVIEN, c.GIOBATDAU, c.GIOKETTHUC, " +
-                  "CASE " + 
-                  "  WHEN TRUNC(c.NGAYLAM) = TRUNC(?) AND CURRENT_TIMESTAMP BETWEEN c.GIOBATDAU AND c.GIOKETTHUC THEN 'Đang trực' " +
-                  "  ELSE 'Theo lịch' " +
-                  "END AS TRANGTHAI_TRUC " +
-                  "FROM CALAMVIEC c " +
-                  "JOIN NHANVIEN n ON c.MANHANVIEN = n.MANHANVIEN " +
-                  "WHERE TRUNC(c.NGAYLAM) = TRUNC(?) " + 
-                  "ORDER BY c.GIOBATDAU";
-            columnNames.addAll(List.of("Tên Nhân Viên", "Giờ Bắt Đầu", "Giờ Kết Thúc", "Trạng Thái"));
-        } else if ("Lịch trực theo ngày".equals(reportType)) {
-            sql = "SELECT n.TENNHANVIEN, c.GIOBATDAU, c.GIOKETTHUC " +
-                  "FROM CALAMVIEC c " +
-                  "JOIN NHANVIEN n ON c.MANHANVIEN = n.MANHANVIEN " +
-                  "WHERE TRUNC(c.NGAYLAM) = TRUNC(?) " +
-                  "ORDER BY n.TENNHANVIEN, c.GIOBATDAU";
-            columnNames.addAll(List.of("Tên Nhân Viên", "Giờ Bắt Đầu", "Giờ Kết Thúc"));
-        }
-        modelBaoCao.setColumnIdentifiers(columnNames.toArray());
-
-        try (Connection conn = ConnectionOracle.getOracleConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-
-            pstmt.setDate(1, new java.sql.Date(selectedDate.getTime()));
-             if ("Nhân sự trực trong ngày".equals(reportType)) { 
-                pstmt.setDate(2, new java.sql.Date(selectedDate.getTime())); 
-            }
-
-            ResultSet rs = pstmt.executeQuery();
-            boolean found = false;
-            while (rs.next()) {
-                found = true;
-                if ("Nhân sự trực trong ngày".equals(reportType)) {
-                     modelBaoCao.addRow(new Object[]{
-                        rs.getString("TENNHANVIEN"),
-                        timeFormat.format(rs.getTimestamp("GIOBATDAU")),
-                        timeFormat.format(rs.getTimestamp("GIOKETTHUC")),
-                        rs.getString("TRANGTHAI_TRUC")
-                    });
-                } else { 
-                    modelBaoCao.addRow(new Object[]{
-                        rs.getString("TENNHANVIEN"),
-                        timeFormat.format(rs.getTimestamp("GIOBATDAU")),
-                        timeFormat.format(rs.getTimestamp("GIOKETTHUC"))
-                    });
-                }
-            }
-            if (!found) {
-                modelBaoCao.setColumnIdentifiers(new String[]{"Thông báo"});
-                modelBaoCao.addRow(new Object[]{"Không có dữ liệu ca làm việc cho ngày đã chọn."});
-            }
-
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Lỗi khi tạo báo cáo: " + ex.getMessage(), "Lỗi CSDL", JOptionPane.ERROR_MESSAGE);
-            modelBaoCao.setColumnIdentifiers(new String[]{"Lỗi"}); 
-            modelBaoCao.addRow(new Object[]{"Lỗi khi tạo báo cáo: " + ex.getMessage()});
-        }
-    }
-
+    // Removed generatePersonnelReportAction(ActionEvent e) method
 
     public static void main(String args[]) {
         try {
@@ -678,7 +565,7 @@ public class QuanLyNhanSuBaiXe extends javax.swing.JFrame {
             System.err.println("Failed to initialize LaF: " + ex.getMessage());
         }
         java.awt.EventQueue.invokeLater(() -> {
-             AdminHomePage fakeParent = null; 
+             AdminHomePage fakeParent = null;
             new QuanLyNhanSuBaiXe(fakeParent).setVisible(true);
         });
     }

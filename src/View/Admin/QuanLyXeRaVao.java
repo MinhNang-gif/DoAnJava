@@ -238,27 +238,14 @@ public class QuanLyXeRaVao extends javax.swing.JFrame {
         }
 
         try {
+            // Check if customer exists
             if (!checkCustomerExists(maKH)) {
-                String tenKH = JOptionPane.showInputDialog(this,
-                        "Mã khách hàng '" + maKH + "' chưa tồn tại.\nNhập Tên Khách Hàng để thêm mới:",
-                        "Thêm Khách Hàng Mới", JOptionPane.PLAIN_MESSAGE);
-                if (tenKH == null || tenKH.trim().isEmpty()) {
-                    JOptionPane.showMessageDialog(this, "Thêm khách hàng mới đã bị hủy hoặc tên khách hàng trống.", "Thông Báo", JOptionPane.WARNING_MESSAGE);
-                    return;
-                }
-                tenKH = tenKH.trim();
-                String insertKhachHangSql = "INSERT INTO KHACHHANG (MAKH, TENKH) VALUES (?, ?)";
-                try (PreparedStatement pstmtKH = conn.prepareStatement(insertKhachHangSql)) {
-                    pstmtKH.setString(1, maKH);
-                    pstmtKH.setString(2, tenKH);
-                    pstmtKH.executeUpdate();
-                    JOptionPane.showMessageDialog(this, "Đã thêm khách hàng mới: " + maKH + " - " + tenKH, "Thông Báo", JOptionPane.INFORMATION_MESSAGE);
-                } catch (SQLException exKH) {
-                    JOptionPane.showMessageDialog(this, "Lỗi khi thêm khách hàng mới: " + exKH.getMessage(), "Lỗi Database", JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
+                JOptionPane.showMessageDialog(this, "Mã khách hàng '" + maKH + "' không tồn tại trong hệ thống.\nVui lòng thêm khách hàng trước hoặc nhập đúng mã khách hàng.", "Lỗi Khách Hàng", JOptionPane.ERROR_MESSAGE);
+                txtMaKH.requestFocus(); // Optionally focus on the customer ID field
+                return; // Stop further processing
             }
 
+            // Check if vehicle exists in XE table, prompt to add if not
             if (!checkVehicleExistsInXE(bienSo)) {
                 int confirmAddXe = JOptionPane.showConfirmDialog(this,
                     "Biển số " + bienSo + " chưa tồn tại trong bảng XE. Bạn có muốn thêm mới xe này không?",
@@ -267,7 +254,7 @@ public class QuanLyXeRaVao extends javax.swing.JFrame {
                     String insertXeSql = "INSERT INTO XE (BIENSO, TENLOAIXE) VALUES (?, ?)";
                     try (PreparedStatement pstmtXe = conn.prepareStatement(insertXeSql)) {
                         pstmtXe.setString(1, bienSo);
-                        pstmtXe.setString(2, loaiXe);
+                        pstmtXe.setString(2, loaiXe); // Use selected vehicle type
                         pstmtXe.executeUpdate();
                         JOptionPane.showMessageDialog(this, "Đã thêm xe " + bienSo + " vào danh sách xe.", "Thông Báo", JOptionPane.INFORMATION_MESSAGE);
                     } catch (SQLException exXe) {
@@ -276,10 +263,11 @@ public class QuanLyXeRaVao extends javax.swing.JFrame {
                     }
                 } else {
                     JOptionPane.showMessageDialog(this, "Xe vào bãi bị hủy do xe chưa có trong hệ thống.", "Thông Báo", JOptionPane.WARNING_MESSAGE);
-                    return; 
+                    return;
                 }
             }
 
+            // Check if vehicle is already in the lot (DANG GUI)
             String checkSql = "SELECT COUNT(*) FROM QUANLYRAVAO WHERE BIENSO = ? AND TRANGTHAI = 'DANG GUI'";
             try (PreparedStatement pstmtCheck = conn.prepareStatement(checkSql)) {
                 pstmtCheck.setString(1, bienSo);
@@ -290,6 +278,7 @@ public class QuanLyXeRaVao extends javax.swing.JFrame {
                 }
             }
 
+            // Proceed to add vehicle entry to QUANLYRAVAO
             String maQLRV = generateMaQLRV();
             String sqlInsertQLRV = "INSERT INTO QUANLYRAVAO (MAQUANLYRAVAO, BIENSO, MAKH, THOIGIANVAO, TRANGTHAI, LOAIXE) VALUES (?, ?, ?, CURRENT_TIMESTAMP, 'DANG GUI', ?)";
             try (PreparedStatement pstmt = conn.prepareStatement(sqlInsertQLRV)) {

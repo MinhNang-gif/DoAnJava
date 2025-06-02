@@ -30,7 +30,7 @@ public class QuanLyKhachHang extends javax.swing.JFrame {
 
         public static final String ICON_PATH_PREFIX = "/icons/";
         public static final String BACK_ICON = ICON_PATH_PREFIX + "back_arrow.png";
-        public static final String ADD_ICON = ICON_PATH_PREFIX + "add.png";
+        // public static final String ADD_ICON = ICON_PATH_PREFIX + "add.png"; // Removed
         public static final String EDIT_ICON = ICON_PATH_PREFIX + "update.png";
         public static final String DELETE_ICON = ICON_PATH_PREFIX + "delete.png";
         public static final String CLEAR_ICON = ICON_PATH_PREFIX + "refresh.png";
@@ -55,7 +55,7 @@ public class QuanLyKhachHang extends javax.swing.JFrame {
     private JTextField txtSearch;
 
     private JButton btnNew;
-    private JButton btnAdd;
+    // private JButton btnAdd; // Removed
     private JButton btnUpdate;
     private JButton btnDelete;
     private JButton btnBack;
@@ -241,12 +241,14 @@ public class QuanLyKhachHang extends javax.swing.JFrame {
         JPanel actionButtonsPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         actionButtonsPanel.setBackground(UIStyleConstants.PANEL_BACKGROUND_COLOR);
         btnNew = createStyledButton("Nhập mới", UIStyleConstants.CLEAR_ICON);
-        btnAdd = createStyledButton("Thêm", UIStyleConstants.ADD_ICON);
+        // btnAdd = createStyledButton("Thêm", UIStyleConstants.ADD_ICON); // Removed
         btnUpdate = createStyledButton("Cập nhật", UIStyleConstants.EDIT_ICON);
         btnDelete = createStyledButton("Xóa", UIStyleConstants.DELETE_ICON);
-        actionButtonsPanel.add(btnNew); actionButtonsPanel.add(btnAdd); actionButtonsPanel.add(btnUpdate); actionButtonsPanel.add(btnDelete);
+        actionButtonsPanel.add(btnNew);
+        // actionButtonsPanel.add(btnAdd); // Removed
+        actionButtonsPanel.add(btnUpdate); actionButtonsPanel.add(btnDelete);
         btnNew.addActionListener(e -> clearForm());
-        btnAdd.addActionListener(e -> addCustomer());
+        // btnAdd.addActionListener(e -> addCustomer()); // Removed
         btnUpdate.addActionListener(e -> updateCustomer());
         btnDelete.addActionListener(e -> deleteCustomer());
 
@@ -348,14 +350,14 @@ public class QuanLyKhachHang extends javax.swing.JFrame {
         txtMaKH.requestFocus(); customerTable.clearSelection();
     }
 
-    private boolean validateForm(boolean isUpdate) {
+    private boolean validateForm() { // Removed isUpdate parameter
         String maKH = txtMaKH.getText().trim();
         String tenKH = txtTenKH.getText().trim();
         String loaiKH = txtLoaiKH.getText().trim();
         String email = txtEmail.getText().trim();
 
         if (maKH.isEmpty()) { JOptionPane.showMessageDialog(this, "Vui lòng nhập mã khách hàng!", "Lỗi", JOptionPane.ERROR_MESSAGE); txtMaKH.requestFocus(); return false; }
-        if (!isUpdate && maKHExists(maKH)) { JOptionPane.showMessageDialog(this, "Mã khách hàng đã tồn tại!", "Lỗi", JOptionPane.ERROR_MESSAGE); txtMaKH.requestFocus(); return false; }
+        // Removed: if (!isUpdate && maKHExists(maKH)) { JOptionPane.showMessageDialog(this, "Mã khách hàng đã tồn tại!", "Lỗi", JOptionPane.ERROR_MESSAGE); txtMaKH.requestFocus(); return false; }
         if (tenKH.isEmpty()) { JOptionPane.showMessageDialog(this, "Vui lòng nhập tên khách hàng!", "Lỗi", JOptionPane.ERROR_MESSAGE); txtTenKH.requestFocus(); return false; }
         if (loaiKH.isEmpty()) { JOptionPane.showMessageDialog(this, "Vui lòng nhập loại khách hàng!", "Lỗi", JOptionPane.ERROR_MESSAGE); txtLoaiKH.requestFocus(); return false; }
         if (!email.isEmpty() && !email.matches("^[A-Za-z0-9+_.-]+@(.+)$")) { JOptionPane.showMessageDialog(this, "Email không hợp lệ!", "Lỗi", JOptionPane.ERROR_MESSAGE); txtEmail.requestFocus(); return false; }
@@ -376,29 +378,11 @@ public class QuanLyKhachHang extends javax.swing.JFrame {
         return false; 
     }
 
-    private void addCustomer() {
-        if (!validateForm(false)) return;
-        String maKH = txtMaKH.getText().trim(); String tenKH = txtTenKH.getText().trim();
-        String sdt = txtSDT.getText().trim(); String email = txtEmail.getText().trim();
-        String diaChi = txtDiaChi.getText().trim(); String loaiKH = txtLoaiKH.getText().trim();
-        String sql = "INSERT INTO KHACHHANG (MAKH, TENKH, SDT, DIACHI, EMAIL, LOAIKH) VALUES (?, ?, ?, ?, ?, ?)";
-        try (Connection conn = ConnectionUtils.getMyConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, maKH); pstmt.setString(2, tenKH);
-            pstmt.setString(3, sdt.isEmpty() ? null : sdt); pstmt.setString(4, diaChi.isEmpty() ? null : diaChi);
-            pstmt.setString(5, email.isEmpty() ? null : email); pstmt.setString(6, loaiKH);
-            if (pstmt.executeUpdate() > 0) {
-                JOptionPane.showMessageDialog(this, "Thêm khách hàng thành công!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
-                clearForm(); loadCustomerData();
-            } else JOptionPane.showMessageDialog(this, "Thêm khách hàng thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
-        } catch (SQLException | ClassNotFoundException e) {
-            JOptionPane.showMessageDialog(this, "Lỗi khi thêm khách hàng: " + e.getMessage(), "Lỗi SQL", JOptionPane.ERROR_MESSAGE);
-            e.printStackTrace();
-        }
-    }
+    // Removed addCustomer() method
 
     private void updateCustomer() {
         if (customerTable.getSelectedRow() == -1) { JOptionPane.showMessageDialog(this, "Vui lòng chọn khách hàng cần cập nhật!", "Thông báo", JOptionPane.WARNING_MESSAGE); return; }
-        if (!validateForm(true)) return;
+        if (!validateForm()) return; // Updated call
         String originalMaKH = (String) tableModel.getValueAt(customerTable.getSelectedRow(), 1);
         String maKH = txtMaKH.getText().trim(); String tenKH = txtTenKH.getText().trim();
         String sdt = txtSDT.getText().trim(); String email = txtEmail.getText().trim();

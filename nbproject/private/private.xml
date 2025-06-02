@@ -4,10 +4,9 @@
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
             <file>file:/D:/Java/QuanLyXeVaBaoDuongXe/QuanLyXeVaBaoDuongXe/src/View/DangNhap.java</file>
-            <file>file:/D:/Java/QuanLyXeVaBaoDuongXe/QuanLyXeVaBaoDuongXe/src/View/Customer/CustomerHomePage.java</file>
-            <file>file:/D:/Java/QuanLyXeVaBaoDuongXe/QuanLyXeVaBaoDuongXe/src/View/Customer/DanhSachHoaDon.java</file>
-            <file>file:/D:/Java/QuanLyXeVaBaoDuongXe/QuanLyXeVaBaoDuongXe/src/View/Customer/ThanhToanHoaDon.java</file>
-            <file>file:/D:/Java/QuanLyXeVaBaoDuongXe/QuanLyXeVaBaoDuongXe/src/View/Customer/ThanhToanHoaDonNgayLapTuc.java</file>
+            <file>file:/D:/Java/QuanLyXeVaBaoDuongXe/QuanLyXeVaBaoDuongXe/src/View/Admin/AdminHomePage.java</file>
+            <file>file:/D:/Java/QuanLyXeVaBaoDuongXe/QuanLyXeVaBaoDuongXe/src/View/Admin/QuanLyDoanhThuVaThongKe.java</file>
+            <file>file:/D:/Java/QuanLyXeVaBaoDuongXe/QuanLyXeVaBaoDuongXe/src/View/Employee/BaoCaoSuCo.java</file>
         </group>
     </open-files>
 </project-private>

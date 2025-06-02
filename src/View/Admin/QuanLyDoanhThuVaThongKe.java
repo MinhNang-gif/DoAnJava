@@ -90,7 +90,7 @@ public class QuanLyDoanhThuVaThongKe extends javax.swing.JFrame {
 
         setTitle("Quản Lý Doanh Thu và Thống Kê");
         setSize(1300, 850);
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE); // Changed from EXIT_ON_CLOSE
         setLocationRelativeTo(null);
         getContentPane().setBackground(COLOR_BACKGROUND);
         setLayout(new BorderLayout(10, 10));
@@ -110,7 +110,7 @@ public class QuanLyDoanhThuVaThongKe extends javax.swing.JFrame {
 
         add(tabbedPane, BorderLayout.CENTER);
 
-        setInitialDates();
+        setInitialDates(); // This ensures date pickers have default values
         setVisible(true);
     }
 
@@ -123,7 +123,7 @@ public class QuanLyDoanhThuVaThongKe extends javax.swing.JFrame {
         if (dcEndDateIncomeExpense != null) dcEndDateIncomeExpense.setDate(currentDate);
         if (dcEndDateInvoice != null) dcEndDateInvoice.setDate(currentDate);
 
-        cal.add(Calendar.DAY_OF_MONTH, -6);
+        cal.add(Calendar.DAY_OF_MONTH, -6); // Default to last 7 days
         Date startDateDefault = cal.getTime();
 
         if (dcStartDateRevenue != null) dcStartDateRevenue.setDate(startDateDefault);
@@ -173,7 +173,7 @@ public class QuanLyDoanhThuVaThongKe extends javax.swing.JFrame {
         JFreeChart barChart = ChartFactory.createBarChart(
                 title, categoryAxisLabel, valueAxisLabel, dataset,
                 PlotOrientation.VERTICAL,
-                !isRevenueChart, // Hiển thị legend cho biểu đồ Thu Chi nếu isRevenueChart là false
+                !isRevenueChart, 
                 true, false);
 
         barChart.setBackgroundPaint(Color.white);
@@ -181,36 +181,33 @@ public class QuanLyDoanhThuVaThongKe extends javax.swing.JFrame {
 
         if (plot == null) {
             System.err.println("Lỗi: CategoryPlot là null sau khi tạo biểu đồ.");
-            return barChart; // Trả về biểu đồ cơ bản hoặc ném ngoại lệ
+            return barChart; 
         }
 
         plot.setBackgroundPaint(COLOR_BACKGROUND);
         plot.setDomainGridlinePaint(Color.LIGHT_GRAY);
         plot.setRangeGridlinePaint(Color.LIGHT_GRAY);
-        plot.setInsets(new RectangleInsets(5.0, 5.0, 25.0, 5.0)); // Giữ nguyên bottom inset để legend gần trục X
+        plot.setInsets(new RectangleInsets(5.0, 5.0, 25.0, 5.0)); 
 
         CategoryItemRenderer genericRenderer = plot.getRenderer();
 
         if (genericRenderer instanceof BarRenderer) {
             BarRenderer renderer = (BarRenderer) genericRenderer;
 
-            // Các cài đặt chung cho BarRenderer
-            renderer.setDrawBarOutline(false); // Dòng này đã từng gây lỗi
+            renderer.setDrawBarOutline(false); 
             renderer.setDefaultItemLabelGenerator(new StandardCategoryItemLabelGenerator("{2}", currencyFormat));
             renderer.setDefaultItemLabelsVisible(true);
             renderer.setDefaultPositiveItemLabelPosition(new org.jfree.chart.labels.ItemLabelPosition(org.jfree.chart.labels.ItemLabelAnchor.OUTSIDE12, org.jfree.chart.ui.TextAnchor.BOTTOM_CENTER));
-            renderer.setBarPainter(new StandardBarPainter()); // Áp dụng StandardBarPainter chung
+            renderer.setBarPainter(new StandardBarPainter()); 
 
-            // Cài đặt riêng dựa theo loại biểu đồ
             if (isRevenueChart) {
                 renderer.setSeriesPaint(0, COLOR_BLUE_CUSTOM);
                 if (barChart.getLegend() != null) {
-                    barChart.getLegend().setVisible(false); // Ẩn legend cho biểu đồ doanh thu
+                    barChart.getLegend().setVisible(false); 
                 }
                 renderer.setMaximumBarWidth(0.25);
                 renderer.setItemMargin(0.05);
-            } else { // Biểu đồ Thu Chi
-                // Cài đặt màu cho series Thu/Chi
+            } else { 
                  if (dataset != null && dataset.getRowCount() > 0) {
                     if (dataset.getRowCount() >= 2 && dataset.getRowKeys().size() >= 2) {
                         int thuIndex = dataset.getRowIndex("Tổng Thu");
@@ -219,7 +216,7 @@ public class QuanLyDoanhThuVaThongKe extends javax.swing.JFrame {
                         if (thuIndex != -1) renderer.setSeriesPaint(thuIndex, COLOR_BLUE_CUSTOM);
                         if (chiIndex != -1) renderer.setSeriesPaint(chiIndex, COLOR_RED_CUSTOM);
                         
-                        if (thuIndex == -1 && chiIndex == -1 && dataset.getRowCount() == 2) { // Fallback
+                        if (thuIndex == -1 && chiIndex == -1 && dataset.getRowCount() == 2) { 
                             renderer.setSeriesPaint(0, COLOR_BLUE_CUSTOM);
                             renderer.setSeriesPaint(1, COLOR_RED_CUSTOM);
                         }
@@ -235,7 +232,6 @@ public class QuanLyDoanhThuVaThongKe extends javax.swing.JFrame {
                     }
                 }
                 renderer.setItemMargin(0.1);
-                // Legend cho biểu đồ Thu Chi đã được kích hoạt bởi ChartFactory
             }
         } else {
             System.err.println("Lỗi: Renderer không phải là BarRenderer hoặc là null. Không thể áp dụng cài đặt cho BarRenderer.");
@@ -246,7 +242,6 @@ public class QuanLyDoanhThuVaThongKe extends javax.swing.JFrame {
             }
         }
 
-        // Cấu hình trục Domain (X)
         CategoryAxis domainAxis = plot.getDomainAxis();
         domainAxis.setCategoryLabelPositions(CategoryLabelPositions.UP_45);
         domainAxis.setTickLabelFont(new Font("Segoe UI", Font.PLAIN, 11));
@@ -254,7 +249,6 @@ public class QuanLyDoanhThuVaThongKe extends javax.swing.JFrame {
         domainAxis.setLowerMargin(0.02);
         domainAxis.setUpperMargin(0.02);
 
-        // Cấu hình trục Range (Y)
         NumberAxis rangeAxis = (NumberAxis) plot.getRangeAxis();
         rangeAxis.setNumberFormatOverride(currencyFormatVND);
         rangeAxis.setTickLabelFont(new Font("Segoe UI", Font.PLAIN, 11));
@@ -280,22 +274,13 @@ public class QuanLyDoanhThuVaThongKe extends javax.swing.JFrame {
             rangeAxis.setAutoTickUnitSelection(true);
         }
 
-        // Cấu hình tiêu đề và Legend
         barChart.getTitle().setFont(new Font("Segoe UI", Font.BOLD, 18));
         LegendTitle legend = barChart.getLegend();
         if (legend != null) {
             legend.setItemFont(new Font("Segoe UI", Font.PLAIN, 12));
-            // Việc hiển thị legend đã được quyết định khi gọi ChartFactory.createBarChart
-            // !isRevenueChart (true cho Thu Chi, false cho Doanh Thu)
-            // Nếu isRevenueChart=true (Doanh thu), legend sẽ không được tạo/hiển thị
-            // Nếu isRevenueChart=false (Thu Chi), legend sẽ được tạo/hiển thị
         }
         return barChart;
     }
-
-    // ... (các phương thức khác không đổi) ...
-    // ... (createRevenuePanel, createIncomeExpensePanel, createInvoiceLookupPanel, etc.)
-    // ... (Đảm bảo setPreferredSize cho chartPanelIncomeExpense là (1200, 500) trong createIncomeExpensePanel)
 
     private JScrollPane createRevenuePanel() {
         JPanel mainTabContentPanel = new JPanel(new BorderLayout(10, 10));
@@ -438,7 +423,7 @@ public class QuanLyDoanhThuVaThongKe extends javax.swing.JFrame {
         DefaultCategoryDataset initialIEdataSet = new DefaultCategoryDataset();
         JFreeChart incomeExpenseChartObject = createBarChart(initialIEdataSet, "Biểu đồ Thu Chi Theo Ngày", "Ngày", "Số Tiền", false);
         chartPanelIncomeExpense = new ChartPanel(incomeExpenseChartObject);
-        chartPanelIncomeExpense.setPreferredSize(new Dimension(1200, 500)); // Đã tăng chiều cao
+        chartPanelIncomeExpense.setPreferredSize(new Dimension(1200, 500)); 
 
         pnlResults.add(chartPanelIncomeExpense, BorderLayout.CENTER);
         mainTabContentPanel.add(pnlResults, BorderLayout.CENTER);
@@ -449,7 +434,6 @@ public class QuanLyDoanhThuVaThongKe extends javax.swing.JFrame {
         return tabScrollPane;
     }
 
-    // ... (phần còn lại không thay đổi nhiều)
     private JScrollPane createInvoiceLookupPanel() {
         JPanel mainTabContentPanel = new JPanel(new BorderLayout(10, 10));
         mainTabContentPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
@@ -466,7 +450,7 @@ public class QuanLyDoanhThuVaThongKe extends javax.swing.JFrame {
         dcEndDateInvoice = createJDateChooser();
         JButton btnSearchInvoice = new JButton("Tìm Hóa Đơn");
         btnSearchInvoice.setFont(FONT_BUTTON);
-        btnSearchInvoice.addActionListener(this::searchInvoicesAction);
+        btnSearchInvoice.addActionListener(this::searchInvoicesAction); // Action listener uses the modified method
 
         pnlControls.add(new JLabel("Tìm (Mã HĐ/KH, Tên KH):"));
         pnlControls.add(txtSearchInvoice);
@@ -506,6 +490,21 @@ public class QuanLyDoanhThuVaThongKe extends javax.swing.JFrame {
         splitPane.setOneTouchExpandable(true);
 
         mainTabContentPanel.add(splitPane, BorderLayout.CENTER);
+
+        // Perform initial load of invoices after UI is ready and initial dates are set
+        SwingUtilities.invokeLater(() -> {
+            Date initialStartDate = dcStartDateInvoice.getDate();
+            Date initialEndDate = dcEndDateInvoice.getDate();
+            if (initialStartDate != null && initialEndDate != null) {
+                performInvoiceSearch("", initialStartDate, initialEndDate); // Pass empty search term
+            } else {
+                // This case should ideally not be hit if setInitialDates() has run correctly
+                // after JDateChooser components are instantiated.
+                 System.err.println("Initial dates for invoice lookup not set. Skipping initial load.");
+                 // Optionally, inform user:
+                 // JOptionPane.showMessageDialog(this, "Không thể tải hóa đơn ban đầu: ngày chưa được thiết lập.", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+            }
+        });
 
         JScrollPane tabScrollPane = new JScrollPane(mainTabContentPanel);
         tabScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
@@ -741,11 +740,16 @@ public class QuanLyDoanhThuVaThongKe extends javax.swing.JFrame {
         }
     }
 
+    // MODIFIED: Action listener now calls the refactored method
     private void searchInvoicesAction(ActionEvent e) {
         String searchTerm = txtSearchInvoice.getText().trim();
         Date startDate = dcStartDateInvoice.getDate();
         Date endDate = dcEndDateInvoice.getDate();
+        performInvoiceSearch(searchTerm, startDate, endDate);
+    }
 
+    // NEW METHOD: Core logic for fetching and displaying invoices
+    private void performInvoiceSearch(String searchTerm, Date startDate, Date endDate) {
         if (startDate == null || endDate == null) {
             JOptionPane.showMessageDialog(this, "Vui lòng chọn ngày bắt đầu và ngày kết thúc cho hóa đơn.", "Lỗi", JOptionPane.ERROR_MESSAGE);
             return;
@@ -764,9 +768,8 @@ public class QuanLyDoanhThuVaThongKe extends javax.swing.JFrame {
         endCal.set(Calendar.MILLISECOND, 999);
         Timestamp endOfDayTimestamp = new Timestamp(endCal.getTimeInMillis());
 
-
         modelInvoices.setRowCount(0);
-        modelInvoiceDetails.setRowCount(0);
+        modelInvoiceDetails.setRowCount(0); // Clear details table as well
 
         StringBuilder sqlBuilder = new StringBuilder(
             "SELECT H.MAHOADON, H.MAKH, K.TENKH, H.NGAYLAP, H.TONGTIEN, H.TRANGTHAI " +
@@ -775,7 +778,7 @@ public class QuanLyDoanhThuVaThongKe extends javax.swing.JFrame {
             "WHERE (H.NGAYLAP BETWEEN ? AND ?) "
         );
 
-        if (!searchTerm.isEmpty()) {
+        if (searchTerm != null && !searchTerm.isEmpty()) {
             sqlBuilder.append("AND (UPPER(H.MAHOADON) LIKE UPPER(?) OR UPPER(H.MAKH) LIKE UPPER(?) OR (K.TENKH IS NOT NULL AND UPPER(K.TENKH) LIKE UPPER(?))) ");
         }
         sqlBuilder.append("ORDER BY H.NGAYLAP DESC");
@@ -787,7 +790,7 @@ public class QuanLyDoanhThuVaThongKe extends javax.swing.JFrame {
             pstmt.setTimestamp(paramIndex++, startTimestamp);
             pstmt.setTimestamp(paramIndex++, endOfDayTimestamp);
 
-            if (!searchTerm.isEmpty()) {
+            if (searchTerm != null && !searchTerm.isEmpty()) {
                 String likeTerm = "%" + searchTerm.toUpperCase() + "%";
                 pstmt.setString(paramIndex++, likeTerm);
                 pstmt.setString(paramIndex++, likeTerm);
@@ -795,7 +798,9 @@ public class QuanLyDoanhThuVaThongKe extends javax.swing.JFrame {
             }
 
             ResultSet rs = pstmt.executeQuery();
+            boolean foundInvoices = false;
             while (rs.next()) {
+                foundInvoices = true;
                 Vector<Object> row = new Vector<>();
                 row.add(rs.getString("MAHOADON"));
                 row.add(rs.getString("MAKH"));
@@ -805,7 +810,8 @@ public class QuanLyDoanhThuVaThongKe extends javax.swing.JFrame {
                 row.add(rs.getString("TRANGTHAI"));
                 modelInvoices.addRow(row);
             }
-            if (modelInvoices.getRowCount() == 0) {
+            if (!foundInvoices) {
+                // This message will show if no invoices match, even on initial load with default dates.
                 JOptionPane.showMessageDialog(this, "Không tìm thấy hóa đơn nào khớp với tiêu chí.", "Thông Báo", JOptionPane.INFORMATION_MESSAGE);
             }
 
@@ -814,6 +820,7 @@ public class QuanLyDoanhThuVaThongKe extends javax.swing.JFrame {
             ex.printStackTrace();
         }
     }
+
 
     private void loadInvoiceDetails(String maHoaDon) {
         modelInvoiceDetails.setRowCount(0);
