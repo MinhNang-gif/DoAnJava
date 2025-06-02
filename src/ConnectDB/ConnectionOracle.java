@@ -1,5 +1,4 @@
 // Tao ket noi den oracle db va tra ve doi tuong Connection
-
 package ConnectDB;
 
 import java.sql.*;
@@ -21,28 +20,6 @@ public class ConnectionOracle {
 
         // Tao ket noi den csdl
         Connection conn = DriverManager.getConnection(connectionURL, username, password);
-
-//        // Tao cau lenh SQL
-//        String sql = "SELECT * FROM KHACHHANG";
-//
-//        // Thuc thi truy van
-//        try (
-//            Statement statement = conn.createStatement();
-//            ResultSet resultSet = statement.executeQuery(sql);
-//        ) {
-//            while (resultSet.next()) {
-//                String maKh = resultSet.getString("MAKH");
-//                String tenKh = resultSet.getString("TENKH");
-//                String sdt = resultSet.getString("SDT");
-//                String diaChi = resultSet.getString("DIACHI");
-//                String email = resultSet.getString("EMAIL");
-//                String loaiKh = resultSet.getString("LOAIKH");
-//
-//                System.out.printf("MAKH: %s | TENKH: %s | SDT: %s | DIACHI: %s | EMAIL: %s | LOAIKH: %s%n", // %d cho so nguyen, %s cho chuoi 
-//                            maKh, tenKh, sdt, diaChi, email, loaiKh
-//                );
-//            }
-//        }
 
         return conn;
     }
