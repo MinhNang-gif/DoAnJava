@@ -432,18 +432,22 @@ public class CustomerHomePage extends javax.swing.JFrame {
 
             this.currentUserPurchasedTicketsList.clear();
             int ticketCount = Integer.parseInt(userDataProperties.getProperty(TICKET_COUNT_PROPERTY_KEY, "0"));
-            SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+            // SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss"); // Không thấy dùng
 
             for (int i = 0; i < ticketCount; i++) {
                 String name = userDataProperties.getProperty(TICKET_PREFIX_PROPERTY_KEY + i + ".name");
                 if (name == null) continue;
+
+                // **THÊM LẤY MAVEXE TỪ PROPERTIES (NẾU CÓ)**
+                String maVeXeFromFile = userDataProperties.getProperty(TICKET_PREFIX_PROPERTY_KEY + i + ".maVeXe", "UNKNOWN_MAVEXE_" + i); // Giá trị mặc định nếu không có
 
                 int quantity = Integer.parseInt(userDataProperties.getProperty(TICKET_PREFIX_PROPERTY_KEY + i + ".quantity", "0"));
                 double unitPrice = Double.parseDouble(userDataProperties.getProperty(TICKET_PREFIX_PROPERTY_KEY + i + ".unitPrice", "0.0"));
                 double totalPrice = Double.parseDouble(userDataProperties.getProperty(TICKET_PREFIX_PROPERTY_KEY + i + ".totalPrice", "0.0"));
                 String purchaseDateStr = userDataProperties.getProperty(TICKET_PREFIX_PROPERTY_KEY + i + ".purchaseDate");
 
-                LichSuVeDaMua ticket = new LichSuVeDaMua(name, quantity, unitPrice, totalPrice);
+                // **SỬA CONSTRUCTOR Ở ĐÂY**
+                LichSuVeDaMua ticket = new LichSuVeDaMua(maVeXeFromFile, name, quantity, unitPrice, totalPrice);
                 if (purchaseDateStr != null && !purchaseDateStr.isEmpty()) {
                     ticket.setPurchaseDate(purchaseDateStr);
                 }
@@ -457,32 +461,41 @@ public class CustomerHomePage extends javax.swing.JFrame {
     }
 
     public void saveUserDataForCurrentUser() {
-         if (!isValidUserToken(this.currentUserToken) || userSpecificDataFile == null) {
-             System.err.println("Không thể lưu dữ liệu: User token không hợp lệ hoặc file chưa được khởi tạo.");
-             return;
-        }
+        if (!isValidUserToken(this.currentUserToken) || userSpecificDataFile == null) {
+            System.err.println("Không thể lưu dữ liệu: User token không hợp lệ hoặc file chưa được khởi tạo.");
+            return;
+       }
 
-        userDataProperties.setProperty(BALANCE_PROPERTY_KEY, String.valueOf(this.currentUserBalance));
-        userDataProperties.setProperty(TICKET_COUNT_PROPERTY_KEY, String.valueOf(this.currentUserPurchasedTicketsList.size()));
+       userDataProperties.setProperty(BALANCE_PROPERTY_KEY, String.valueOf(this.currentUserBalance));
+       userDataProperties.setProperty(TICKET_COUNT_PROPERTY_KEY, String.valueOf(this.currentUserPurchasedTicketsList.size()));
 
-        for (int i = 0; i < this.currentUserPurchasedTicketsList.size(); i++) {
-            LichSuVeDaMua ticket = this.currentUserPurchasedTicketsList.get(i);
-            String prefix = TICKET_PREFIX_PROPERTY_KEY + i + ".";
-            userDataProperties.setProperty(prefix + "name", ticket.getName());
-            userDataProperties.setProperty(prefix + "quantity", String.valueOf(ticket.getQuantity()));
-            userDataProperties.setProperty(prefix + "unitPrice", String.valueOf(ticket.getUnitPrice()));
-            userDataProperties.setProperty(prefix + "totalPrice", String.valueOf(ticket.getTotalPrice()));
-            if (ticket.getPurchaseDate() != null) {
-                 userDataProperties.setProperty(prefix + "purchaseDate", ticket.getPurchaseDate());
-            }
-        }
+       for (int i = 0; i < this.currentUserPurchasedTicketsList.size(); i++) {
+           LichSuVeDaMua ticket = this.currentUserPurchasedTicketsList.get(i);
+           String prefix = TICKET_PREFIX_PROPERTY_KEY + i + ".";
 
-        try (OutputStream output = new FileOutputStream(userSpecificDataFile)) {
-            userDataProperties.store(output, "User Data for " + currentUserToken.getEntityId());
-        } catch (IOException e) {
-            System.err.println("Lỗi khi lưu dữ liệu vào " + userSpecificDataFile.getName() + ": " + e.getMessage());
-        }
-    }
+           // **THÊM LƯU MAVEXE VÀO PROPERTIES**
+           if (ticket.getMaVeXe() != null) { // Kiểm tra null trước khi lưu
+               userDataProperties.setProperty(prefix + "maVeXe", ticket.getMaVeXe());
+           } else {
+               userDataProperties.remove(prefix + "maVeXe"); // Xóa nếu nó là null để tránh lưu chuỗi "null"
+           }
+
+           userDataProperties.setProperty(prefix + "name", ticket.getName());
+           userDataProperties.setProperty(prefix + "quantity", String.valueOf(ticket.getQuantity()));
+           userDataProperties.setProperty(prefix + "unitPrice", String.valueOf(ticket.getUnitPrice()));
+           userDataProperties.setProperty(prefix + "totalPrice", String.valueOf(ticket.getTotalPrice()));
+           if (ticket.getPurchaseDate() != null) {
+                userDataProperties.setProperty(prefix + "purchaseDate", ticket.getPurchaseDate());
+           }
+       }
+
+       try (OutputStream output = new FileOutputStream(userSpecificDataFile)) {
+           userDataProperties.store(output, "User Data for " + currentUserToken.getEntityId());
+           System.out.println("Đã lưu dữ liệu người dùng vào: " + userSpecificDataFile.getAbsolutePath());
+       } catch (IOException e) {
+           System.err.println("Lỗi khi lưu dữ liệu vào " + userSpecificDataFile.getName() + ": " + e.getMessage());
+       }
+   }
 
     public void refreshBalanceDisplay() {
         if (balanceDisplayLabel != null) {

@@ -16,6 +16,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.security.Timestamp;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -24,6 +25,7 @@ import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.Vector;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -37,6 +39,7 @@ import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.font.PDType0Font;
 import org.apache.pdfbox.pdmodel.font.PDFont;
+import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 
 
 public class ThanhToanHoaDon extends javax.swing.JFrame {
@@ -72,11 +75,12 @@ public class ThanhToanHoaDon extends javax.swing.JFrame {
     private final SimpleDateFormat dateTimeFormatter = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
 
     // --- Data and Owner ---
+    private final String maHoaDon = null;
     private String currentMaHoaDon;
     private CustomerHomePage ownerFrame;
     private String currentInvoiceStatus;
-
-    // Không cần biến static cho font nữa, sẽ load khi cần.
+    private String currentLoaiHoaDon; // << THÊM BIẾN NÀY
+    private String currentMaKhachHangHD; // Lưu mã khách hàng của hóa đơn để truy vấn vé
 
     public ThanhToanHoaDon(String maHoaDon, CustomerHomePage owner) {
         this.currentMaHoaDon = maHoaDon;
@@ -273,99 +277,166 @@ public class ThanhToanHoaDon extends javax.swing.JFrame {
         table.getColumnModel().getColumn(3).setCellRenderer(rightRenderer);
         table.getColumnModel().getColumn(4).setCellRenderer(rightRenderer);
     }
-    private void loadHoaDonInfo() { /* ... Giữ nguyên ... */ 
-        if (this.currentMaHoaDon == null || this.currentMaHoaDon.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Mã hóa đơn không hợp lệ.", "Lỗi Dữ Liệu", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-        Connection conn = null;
-        PreparedStatement pstmt = null;
-        ResultSet rs = null;
-        String sql = "SELECT hd.MAKH, hd.NGAYLAP, hd.TONGTIEN, hd.TRANGTHAI, " +
-                     "kh.TENKH, kh.DIACHI, kh.SDT " +
-                     "FROM HOADON hd " +
-                     "JOIN KHACHHANG kh ON hd.MAKH = kh.MAKH " +
-                     "WHERE hd.MAHOADON = ?";
-        try {
-            conn = ConnectionOracle.getOracleConnection();
-            pstmt = conn.prepareStatement(sql);
-            pstmt.setString(1, this.currentMaHoaDon);
-            rs = pstmt.executeQuery();
+    private void loadHoaDonInfo() {
+    // 1) Chuẩn style/renderer cho bảng chi tiết
+    setupTableStyle(tblChiTietHoaDon);
 
+    // 2) Load chung từ HOADON JOIN KHACHHANG
+    String sql = ""
+        + "SELECT hd.MAKH    AS MAKH, "
+        + "       kh.TENKH   AS TENKH, "
+        + "       kh.DIACHI AS DIACHI, "
+        + "       kh.SDT    AS SDT, "
+        + "       hd.NGAYLAP, "
+        + "       hd.TONGTIEN, "
+        + "       hd.TRANGTHAI, "
+        + "       hd.LOAIHOADON "
+        + "  FROM HOADON hd "
+        + "  JOIN KHACHHANG kh ON hd.MAKH = kh.MAKH "
+        + " WHERE hd.MAHOADON = ?";
+
+    try (
+        Connection conn = ConnectionOracle.getOracleConnection();
+        PreparedStatement pstmt = conn.prepareStatement(sql)
+    ) {
+        pstmt.setString(1, this.currentMaHoaDon);
+        try (ResultSet rs = pstmt.executeQuery()) {
             if (rs.next()) {
+                // Thông tin chung
+                String makh = rs.getString("MAKH");
                 lblMaHoaDon.setText(this.currentMaHoaDon);
+                lblMaKhachHang.setText(makh);
                 lblTenKhachHang.setText(rs.getString("TENKH"));
-                lblMaKhachHang.setText(rs.getString("MAKH"));
-                lblDiaChiKH.setText(rs.getString("DIACHI") != null ? rs.getString("DIACHI") : "N/A");
-                lblSdtKH.setText(rs.getString("SDT") != null ? rs.getString("SDT") : "N/A");
-                Date ngayLap = rs.getTimestamp("NGAYLAP");
-                lblNgayLap.setText(ngayLap != null ? dateTimeFormatter.format(ngayLap) : "N/A");
-                double tongTienDB = rs.getDouble("TONGTIEN");
-                lblTongTienHD.setText(currencyFormatter.format(tongTienDB));
-                this.currentInvoiceStatus = rs.getString("TRANGTHAI");
-                lblTrangThaiHD.setText(this.currentInvoiceStatus != null ? this.currentInvoiceStatus.toUpperCase() : "N/A");
-                if("CHUA THANH TOAN".equalsIgnoreCase(this.currentInvoiceStatus)){
-                    lblTrangThaiHD.setForeground(Color.RED.darker());
-                } else if ("DA THANH TOAN".equalsIgnoreCase(this.currentInvoiceStatus)) {
-                    lblTrangThaiHD.setForeground(new Color(0,128,0));
+                lblDiaChiKH.setText(Optional.ofNullable(rs.getString("DIACHI")).orElse("N/A"));
+                lblSdtKH.setText(Optional.ofNullable(rs.getString("SDT")).orElse("N/A"));
+
+                java.sql.Timestamp ts = rs.getTimestamp("NGAYLAP");
+                lblNgayLap.setText(ts != null
+                    ? dateTimeFormatter.format(ts)
+                    : "N/A"
+                );
+
+                // sau khi đã đọc được rs.next()
+                String loaiHD = rs.getString("LOAIHOADON");
+
+                // nếu là vé gửi xe thì tính lại bằng computeInvoiceTotal(), 
+                // còn bình thường thì lấy luôn từ CSDL
+                double tongHD;
+                if ("VE_XE".equalsIgnoreCase(loaiHD)) {
+                    tongHD = computeInvoiceTotal(conn, this.currentMaHoaDon); // phòng trường hợp lỗi, vẫn fallback về giá trị cũ
                 } else {
-                    lblTrangThaiHD.setForeground(TEXT_COLOR_DARK);
+                    tongHD = rs.getDouble("TONGTIEN");
                 }
-            } else {
-                JOptionPane.showMessageDialog(this, "Không tìm thấy thông tin hóa đơn: " + this.currentMaHoaDon, "Lỗi Dữ Liệu", JOptionPane.ERROR_MESSAGE);
-                this.dispose(); 
-                handleWindowClose(); 
+
+                lblTongTienHD.setText(currencyFormatter.format(tongHD));
+
+                String trangThai = rs.getString("TRANGTHAI");
+                lblTrangThaiHD.setText(trangThai != null
+                    ? trangThai.toUpperCase()
+                    : "N/A"
+                );
+
+                // Lưu lại để load chi tiết
+                this.currentLoaiHoaDon = rs.getString("LOAIHOADON");
+                this.currentMaKhachHangHD = makh;
+                this.currentInvoiceStatus = trangThai;
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Lỗi SQL khi tải thông tin hóa đơn: " + e.getMessage(), "Lỗi SQL", JOptionPane.ERROR_MESSAGE);
-        } catch (ClassNotFoundException e) {
-             e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Lỗi driver Oracle: " + e.getMessage(), "Lỗi Driver", JOptionPane.ERROR_MESSAGE);
         }
-        finally {
-            try { if (rs != null) rs.close(); if (pstmt != null) pstmt.close(); if (conn != null) conn.close(); } catch (SQLException e) { e.printStackTrace(); }
+
+    } catch (SQLException | ClassNotFoundException ex) {
+        ex.printStackTrace();
+        JOptionPane.showMessageDialog(this,
+            "Lỗi khi tải thông tin chung: " + ex.getMessage(),
+            "Lỗi", JOptionPane.ERROR_MESSAGE
+        );
+    }
+
+    // 3) Sau khi đã có currentLoaiHoaDon, load chi tiết
+    loadChiTietHoaDon();
+}
+
+    private double computeInvoiceTotal(Connection conn, String maHoaDon) throws SQLException {
+    String sql =
+      "SELECT SUM( " +
+      "  CASE " +
+      "    WHEN ct.MAVEXE             IS NOT NULL THEN vx.PHIGUIXE * ct.SOLUONG " +
+      "    ELSE dv.GIA                * ct.SOLUONG " +   // ← cột GIA đúng trong DICHVUBAODUONG
+      "  END" +
+      ") AS TONG " +
+      "FROM CHITIETHOADON ct " +
+      "LEFT JOIN VEGUIXE vx            ON ct.MAVEXE       = vx.MAVEXE " +
+      "LEFT JOIN DICHVUBAODUONG dv     ON ct.MADVBAODUONG = dv.MADVBAODUONG " +
+      "WHERE ct.MAHOADON = ?";
+    try (PreparedStatement ps = conn.prepareStatement(sql)) {
+        ps.setString(1, maHoaDon);
+        try (ResultSet rs = ps.executeQuery()) {
+            return (rs.next() ? rs.getDouble("TONG") : 0.0);
         }
     }
-    private void loadChiTietHoaDon() { /* ... Giữ nguyên ... */ 
-        chiTietTableModel.setRowCount(0);
-        if (this.currentMaHoaDon == null || this.currentMaHoaDon.isEmpty()) return;
-        double calculatedTotalFromDetails = 0.0;
-        Connection conn = null;
-        PreparedStatement pstmt = null;
-        ResultSet rs = null;
-        String sql = "SELECT dv.TENDV, cthd.SOLUONG, dv.GIA, (cthd.SOLUONG * dv.GIA) AS THANHTIEN " +
-                     "FROM CHITIETHOADON cthd " +
-                     "JOIN DICHVUBAODUONG dv ON cthd.MADVBAODUONG = dv.MADVBAODUONG " +
-                     "WHERE cthd.MAHOADON = ?";
-        try {
-            conn = ConnectionOracle.getOracleConnection();
-            pstmt = conn.prepareStatement(sql);
-            pstmt.setString(1, this.currentMaHoaDon);
-            rs = pstmt.executeQuery();
+}
+
+    
+    // Hàm helper để kiểm tra xem hóa đơn có chi tiết dịch vụ không
+    private boolean hasChiTietDichVu(Connection conn, String maHoaDon) throws SQLException {
+        String sqlCheck = "SELECT 1 FROM CHITIETHOADON WHERE MAHOADON = ?";
+        try (PreparedStatement pstmtCheck = conn.prepareStatement(sqlCheck)) {
+            pstmtCheck.setString(1, maHoaDon);
+            try (ResultSet rsCheck = pstmtCheck.executeQuery()) {
+                return rsCheck.next(); // Trả về true nếu có ít nhất 1 dòng
+            }
+        }
+    }
+    
+    /**
+ * Thay thế hoàn toàn cái hàm “phỏng đoán” VE_XE cũ
+ * Giờ chỉ dựa vào CHITIETHOADON → DICHVUBAODUONG hoặc VEGUIXE + LOAIGUIXE
+ */
+private void loadChiTietHoaDon() {
+    chiTietTableModel.setRowCount(0);
+    if (this.currentMaHoaDon == null || this.currentMaHoaDon.isEmpty()) return;
+
+    String sqlDetail;
+    if ("VE_BAO_DUONG".equalsIgnoreCase(this.currentLoaiHoaDon)) {
+        sqlDetail =
+          "SELECT c.MACTHD, d.TENDV AS TEN, c.SOLUONG, d.GIA, c.SOLUONG * d.GIA AS THANHTIEN " +
+          "  FROM CHITIETHOADON c " +
+          "  JOIN DICHVUBAODUONG d ON c.MADVBAODUONG = d.MADVBAODUONG " +
+          " WHERE c.MAHOADON = ?";
+    } else {  // VE_XE
+        sqlDetail =
+          "SELECT c.MACTHD, lg.TENLOAIGUIXE AS TEN, 1 AS SOLUONG, vg.PHIGUIXE AS GIA, vg.PHIGUIXE AS THANHTIEN " +
+          "  FROM CHITIETHOADON c " +
+          "  JOIN VEGUIXE vg ON c.MAVEXE = vg.MAVEXE " +
+          "  JOIN LOAIGUIXE lg ON vg.MALOAIGUIXE = lg.MALOAIGUIXE " +
+          " WHERE c.MAHOADON = ?";
+    }
+
+    try (Connection conn = ConnectionOracle.getOracleConnection();
+         PreparedStatement p = conn.prepareStatement(sqlDetail)) {
+
+        p.setString(1, this.currentMaHoaDon);
+        try (ResultSet rs = p.executeQuery()) {
             int stt = 1;
             while (rs.next()) {
                 Vector<Object> row = new Vector<>();
-                row.add(String.valueOf(stt++));
-                row.add(rs.getString("TENDV"));
-                row.add(rs.getInt("SOLUONG"));
-                row.add(currencyFormatter.format(rs.getDouble("GIA")));
-                double thanhTienItem = rs.getDouble("THANHTIEN");
-                row.add(currencyFormatter.format(thanhTienItem));
+                row.add(stt++);                              // STT
+                row.add(rs.getString("TEN"));                // Tên dịch vụ / loại gửi xe
+                row.add(rs.getInt("SOLUONG"));               // Số lượng
+                row.add(currencyFormatter.format(rs.getDouble("GIA")));       // Đơn giá
+                row.add(currencyFormatter.format(rs.getDouble("THANHTIEN"))); // Thành tiền
                 chiTietTableModel.addRow(row);
-                calculatedTotalFromDetails += thanhTienItem;
             }
-            lblTongTienHD.setText(currencyFormatter.format(calculatedTotalFromDetails));
-        } catch (SQLException e) {
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Lỗi SQL khi tải chi tiết hóa đơn: " + e.getMessage(), "Lỗi SQL", JOptionPane.ERROR_MESSAGE);
-        } catch (ClassNotFoundException e) {
-             e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Lỗi driver Oracle: " + e.getMessage(), "Lỗi Driver", JOptionPane.ERROR_MESSAGE);
-        } finally {
-            try { if (rs != null) rs.close(); if (pstmt != null) pstmt.close(); if (conn != null) conn.close(); } catch (SQLException e) { e.printStackTrace(); }
         }
+    } catch (SQLException | ClassNotFoundException ex) {
+        ex.printStackTrace();
+        JOptionPane.showMessageDialog(this,
+            "Lỗi khi tải chi tiết hóa đơn: " + ex.getMessage(),
+            "Lỗi", JOptionPane.ERROR_MESSAGE
+        );
     }
+}
+
+    
     public void refreshInvoiceDetails() { /* ... Giữ nguyên ... */ 
         System.out.println("ThanhToanHoaDon: Refreshing invoice details for " + currentMaHoaDon);
         loadHoaDonInfo();

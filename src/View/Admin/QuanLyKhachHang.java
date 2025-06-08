@@ -16,6 +16,7 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import javax.swing.table.TableColumn;
 
 public class QuanLyKhachHang extends javax.swing.JFrame {
     private static class UIStyleConstants {
@@ -148,72 +149,119 @@ public class QuanLyKhachHang extends javax.swing.JFrame {
     }
 
     private void createInputFormPanel() {
-        inputFormPanel = new JPanel(new GridBagLayout());
-        inputFormPanel.setBackground(UIStyleConstants.PANEL_BACKGROUND_COLOR);
-        inputFormPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Thông tin khách hàng",
-                javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION,
-                UIStyleConstants.BOLD_FONT, UIStyleConstants.PRIMARY_COLOR));
+    inputFormPanel = new JPanel(new GridBagLayout());
+    inputFormPanel.setBackground(UIStyleConstants.PANEL_BACKGROUND_COLOR);
+    inputFormPanel.setBorder(BorderFactory.createTitledBorder(
+            BorderFactory.createEtchedBorder(), "Thông tin khách hàng",
+            javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION,
+            javax.swing.border.TitledBorder.DEFAULT_POSITION,
+            UIStyleConstants.BOLD_FONT, UIStyleConstants.PRIMARY_COLOR));
 
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(5, 10, 5, 10);
-        gbc.anchor = GridBagConstraints.WEST;
+    GridBagConstraints gbc = new GridBagConstraints();
+    gbc.insets = new Insets(5, 10, 5, 10);
+    gbc.anchor = GridBagConstraints.WEST;
 
-        gbc.gridx = 0; gbc.gridy = 0;
-        JLabel lblMaKH = new JLabel("Mã khách hàng:");
-        lblMaKH.setFont(UIStyleConstants.PLAIN_FONT);
-        inputFormPanel.add(lblMaKH, gbc);
-        gbc.gridx = 1; gbc.fill = GridBagConstraints.HORIZONTAL; gbc.weightx = 1.0;
-        txtMaKH = new JTextField(15);
-        txtMaKH.setFont(UIStyleConstants.PLAIN_FONT);
-        inputFormPanel.add(txtMaKH, gbc);
+    // ====== Hàng 0: Mã khách hàng, Tên khách hàng ======
+    gbc.gridx = 0; 
+    gbc.gridy = 0;
+    JLabel lblMaKH = new JLabel("Mã khách hàng:");
+    lblMaKH.setFont(UIStyleConstants.PLAIN_FONT);
+    inputFormPanel.add(lblMaKH, gbc);
 
-        gbc.gridx = 2; gbc.fill = GridBagConstraints.NONE; gbc.weightx = 0.0;
-        JLabel lblTenKH = new JLabel("Tên khách hàng:");
-        lblTenKH.setFont(UIStyleConstants.PLAIN_FONT);
-        inputFormPanel.add(lblTenKH, gbc);
-        gbc.gridx = 3; gbc.fill = GridBagConstraints.HORIZONTAL; gbc.weightx = 1.0;
-        txtTenKH = new JTextField(15);
-        txtTenKH.setFont(UIStyleConstants.PLAIN_FONT);
-        inputFormPanel.add(txtTenKH, gbc);
+    gbc.gridx = 1;
+    gbc.fill = GridBagConstraints.HORIZONTAL;
+    gbc.weightx = 1.0;
+    txtMaKH = new JTextField(15);
+    txtMaKH.setFont(UIStyleConstants.PLAIN_FONT);
+    inputFormPanel.add(txtMaKH, gbc);
 
-        gbc.gridy = 1;
-        gbc.gridx = 0; gbc.fill = GridBagConstraints.NONE; gbc.weightx = 0.0;
-        JLabel lblSDT = new JLabel("Số điện thoại:");
-        lblSDT.setFont(UIStyleConstants.PLAIN_FONT);
-        inputFormPanel.add(lblSDT, gbc);
-        gbc.gridx = 1; gbc.fill = GridBagConstraints.HORIZONTAL; gbc.weightx = 1.0;
-        txtSDT = new JTextField(15);
-        txtSDT.setFont(UIStyleConstants.PLAIN_FONT);
-        inputFormPanel.add(txtSDT, gbc);
+    gbc.gridx = 2;
+    gbc.fill = GridBagConstraints.NONE;
+    gbc.weightx = 0.0;
+    JLabel lblTenKH = new JLabel("Tên khách hàng:");
+    lblTenKH.setFont(UIStyleConstants.PLAIN_FONT);
+    inputFormPanel.add(lblTenKH, gbc);
 
-        gbc.gridx = 2; gbc.fill = GridBagConstraints.NONE; gbc.weightx = 0.0;
-        JLabel lblEmail = new JLabel("Email:");
-        lblEmail.setFont(UIStyleConstants.PLAIN_FONT);
-        inputFormPanel.add(lblEmail, gbc);
-        gbc.gridx = 3; gbc.fill = GridBagConstraints.HORIZONTAL; gbc.weightx = 1.0;
-        txtEmail = new JTextField(15);
-        txtEmail.setFont(UIStyleConstants.PLAIN_FONT);
-        inputFormPanel.add(txtEmail, gbc);
+    gbc.gridx = 3;
+    gbc.fill = GridBagConstraints.HORIZONTAL;
+    gbc.weightx = 1.0;
+    txtTenKH = new JTextField(15);
+    txtTenKH.setFont(UIStyleConstants.PLAIN_FONT);
+    inputFormPanel.add(txtTenKH, gbc);
 
-        gbc.gridy = 2;
-        gbc.gridx = 0; gbc.fill = GridBagConstraints.NONE; gbc.weightx = 0.0;
-        JLabel lblDiaChi = new JLabel("Địa chỉ:");
-        lblDiaChi.setFont(UIStyleConstants.PLAIN_FONT);
-        inputFormPanel.add(lblDiaChi, gbc);
-        gbc.gridx = 1; gbc.fill = GridBagConstraints.HORIZONTAL; gbc.weightx = 1.0; //gbc.gridwidth = 3; // Địa chỉ có thể chiếm nhiều không gian hơn
-        txtDiaChi = new JTextField(15);
-        txtDiaChi.setFont(UIStyleConstants.PLAIN_FONT);
-        inputFormPanel.add(txtDiaChi, gbc); //gbc.gridwidth = 1; // Reset gridwidth
+    // ====== Hàng 1: Số điện thoại, Email ======
+    gbc.gridy = 1;
+    gbc.gridx = 0;
+    gbc.fill = GridBagConstraints.NONE;
+    gbc.weightx = 0.0;
+    JLabel lblSDT = new JLabel("Số điện thoại:");
+    lblSDT.setFont(UIStyleConstants.PLAIN_FONT);
+    inputFormPanel.add(lblSDT, gbc);
 
-        gbc.gridx = 2; gbc.fill = GridBagConstraints.NONE; gbc.weightx = 0.0;
-        JLabel lblLoaiKH = new JLabel("Loại khách hàng:");
-        lblLoaiKH.setFont(UIStyleConstants.PLAIN_FONT);
-        inputFormPanel.add(lblLoaiKH, gbc);
-        gbc.gridx = 3; gbc.fill = GridBagConstraints.HORIZONTAL; gbc.weightx = 1.0;
-        txtLoaiKH = new JTextField(15);
-        txtLoaiKH.setFont(UIStyleConstants.PLAIN_FONT);
-        inputFormPanel.add(txtLoaiKH, gbc);
-    }
+    gbc.gridx = 1;
+    gbc.fill = GridBagConstraints.HORIZONTAL;
+    gbc.weightx = 1.0;
+    txtSDT = new JTextField(15);
+    txtSDT.setFont(UIStyleConstants.PLAIN_FONT);
+    inputFormPanel.add(txtSDT, gbc);
+
+    gbc.gridx = 2;
+    gbc.fill = GridBagConstraints.NONE;
+    gbc.weightx = 0.0;
+    JLabel lblEmail = new JLabel("Email:");
+    lblEmail.setFont(UIStyleConstants.PLAIN_FONT);
+    inputFormPanel.add(lblEmail, gbc);
+
+    gbc.gridx = 3;
+    gbc.fill = GridBagConstraints.HORIZONTAL;
+    gbc.weightx = 1.0;
+    txtEmail = new JTextField(15);
+    txtEmail.setFont(UIStyleConstants.PLAIN_FONT);
+    inputFormPanel.add(txtEmail, gbc);
+
+    // ====== Hàng 2: Địa chỉ (rút ngắn lại chỉ 1 cell) ======
+    gbc.gridy = 2;
+    gbc.gridx = 0;
+    gbc.fill = GridBagConstraints.NONE;
+    gbc.weightx = 0.0;
+    JLabel lblDiaChi = new JLabel("Địa chỉ:");
+    lblDiaChi.setFont(UIStyleConstants.PLAIN_FONT);
+    inputFormPanel.add(lblDiaChi, gbc);
+
+    gbc.gridx = 1;
+    gbc.fill = GridBagConstraints.HORIZONTAL;
+    gbc.weightx = 1.0;
+    // Chỉ chiếm 1 cột (gridwidth = 1), không phải 3 cột như trước
+    gbc.gridwidth = 1;
+    txtDiaChi = new JTextField(15);
+    txtDiaChi.setFont(UIStyleConstants.PLAIN_FONT);
+    inputFormPanel.add(txtDiaChi, gbc);
+    gbc.gridwidth = 1;  // Reset về mặc định (nếu có dòng khác sau này)
+
+    // ====== Hàng 3: Loại khách hàng (vẫn thêm vào layout nhưng GIẤU đi) ======
+    gbc.gridy = 3;
+    gbc.gridx = 2;
+    gbc.fill = GridBagConstraints.NONE;
+    gbc.weightx = 0.0;
+    JLabel lblLoaiKH = new JLabel("Loại khách hàng:");
+    lblLoaiKH.setFont(UIStyleConstants.PLAIN_FONT);
+    inputFormPanel.add(lblLoaiKH, gbc);
+    // GIẤU luôn label và ô nhập
+    lblLoaiKH.setVisible(false);
+
+    gbc.gridx = 3;
+    gbc.fill = GridBagConstraints.HORIZONTAL;
+    gbc.weightx = 1.0;
+    txtLoaiKH = new JTextField(15);
+    txtLoaiKH.setFont(UIStyleConstants.PLAIN_FONT);
+    inputFormPanel.add(txtLoaiKH, gbc);
+    // GIẤU luôn ô nhập
+    txtLoaiKH.setVisible(false);
+
+    // Kết thúc createInputFormPanel()
+}
+
+
 
     private void createButtonPanel() {
         buttonPanel = new JPanel(new BorderLayout(10,10));
@@ -266,82 +314,126 @@ public class QuanLyKhachHang extends javax.swing.JFrame {
     }
 
     private void createTablePanel() {
-        tablePanel = new JPanel(new BorderLayout());
-        tablePanel.setBackground(UIStyleConstants.PANEL_BACKGROUND_COLOR);
-        tablePanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Danh sách khách hàng",
-                javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION,
-                UIStyleConstants.BOLD_FONT, UIStyleConstants.PRIMARY_COLOR));
-        tablePanel.setPreferredSize(new Dimension(this.getWidth() - 40, 350)); // Sử dụng this.getWidth()
+    tablePanel = new JPanel(new BorderLayout());
+    tablePanel.setBackground(UIStyleConstants.PANEL_BACKGROUND_COLOR);
+    tablePanel.setBorder(BorderFactory.createTitledBorder(
+            BorderFactory.createEtchedBorder(), "Danh sách khách hàng",
+            javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION,
+            javax.swing.border.TitledBorder.DEFAULT_POSITION,
+            UIStyleConstants.BOLD_FONT, UIStyleConstants.PRIMARY_COLOR));
+    tablePanel.setPreferredSize(new Dimension(this.getWidth() - 40, 350));
 
-        String[] columns = {"STT", "Mã KH", "Tên KH", "SĐT", "Email", "Địa Chỉ", "Loại KH"};
-        tableModel = new DefaultTableModel(columns, 0) {
-            @Override public boolean isCellEditable(int row, int column) { return false; }
-        };
-        customerTable = new JTable(tableModel);
-        customerTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        customerTable.setRowHeight(28);
-        customerTable.setFont(UIStyleConstants.PLAIN_FONT);
-        customerTable.setGridColor(Color.LIGHT_GRAY);
-        JTableHeader header = customerTable.getTableHeader();
-        header.setFont(UIStyleConstants.TABLE_HEADER_FONT);
-        header.setBackground(UIStyleConstants.PRIMARY_COLOR);
-        header.setForeground(Color.WHITE);
-        header.setReorderingAllowed(false);
-        customerTable.getSelectionModel().addListSelectionListener(e -> {
-            if (!e.getValueIsAdjusting() && customerTable.getSelectedRow() != -1) displaySelectedCustomer();
-        });
-        JScrollPane scrollPane = new JScrollPane(customerTable);
-        tablePanel.add(scrollPane, BorderLayout.CENTER);
+    // Tạo model với 7 cột (giữ cột "Loại KH" index 6 để tránh chỉnh SQL quá nhiều)
+    String[] columns = {"STT", "Mã KH", "Tên KH", "SĐT", "Email", "Địa Chỉ", "Loại KH"};
+    tableModel = new DefaultTableModel(columns, 0) {
+        @Override 
+        public boolean isCellEditable(int row, int column) {
+            return false;
+        }
+    };
+
+    customerTable = new JTable(tableModel);
+    customerTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+    customerTable.setRowHeight(28);
+    customerTable.setFont(UIStyleConstants.PLAIN_FONT);
+    customerTable.setGridColor(Color.LIGHT_GRAY);
+
+    JTableHeader header = customerTable.getTableHeader();
+    header.setFont(UIStyleConstants.TABLE_HEADER_FONT);
+    header.setBackground(UIStyleConstants.PRIMARY_COLOR);
+    header.setForeground(Color.WHITE);
+    header.setReorderingAllowed(false);
+
+    // ====== Ẩn cột “Loại KH” index = 6 ======
+    // Khi count > 6, tức có cột thứ 7 (index 6) tồn tại, ta cho width = 0
+    if (customerTable.getColumnModel().getColumnCount() > 6) {
+        TableColumn colLoaiKH = customerTable.getColumnModel().getColumn(6);
+        colLoaiKH.setMinWidth(0);
+        colLoaiKH.setMaxWidth(0);
+        colLoaiKH.setPreferredWidth(0);
+        // Nếu muốn xóa hẳn header column, có thể làm:
+        // customerTable.getColumnModel().removeColumn(colLoaiKH);
     }
+
+    // Khi user chọn 1 row, gọi displaySelectedCustomer()
+    customerTable.getSelectionModel().addListSelectionListener(e -> {
+        if (!e.getValueIsAdjusting() && customerTable.getSelectedRow() != -1) {
+            displaySelectedCustomer();
+        }
+    });
+
+    JScrollPane scrollPane = new JScrollPane(customerTable);
+    tablePanel.add(scrollPane, BorderLayout.CENTER);
+}
+
+
 
     private void executeDataLoad(String query, String searchTerm) {
-        tableModel.setRowCount(0); 
-        SwingWorker<List<Object[]>, Void> worker = new SwingWorker<>() {
-            @Override
-            protected List<Object[]> doInBackground() throws Exception {
-                List<Object[]> rows = new ArrayList<>();
-                try (Connection conn = ConnectionUtils.getMyConnection();
-                     PreparedStatement pstmt = conn.prepareStatement(query)) {
-                    if (searchTerm != null && !searchTerm.isEmpty()) {
-                        pstmt.setString(1, "%" + searchTerm + "%");
+    tableModel.setRowCount(0);
+
+    SwingWorker<List<Object[]>, Void> worker = new SwingWorker<>() {
+        @Override
+        protected List<Object[]> doInBackground() throws Exception {
+            List<Object[]> rows = new ArrayList<>();
+            try (Connection conn = ConnectionUtils.getMyConnection();
+                 PreparedStatement pstmt = conn.prepareStatement(query)) {
+                if (searchTerm != null && !searchTerm.isEmpty()) {
+                    pstmt.setString(1, "%" + searchTerm + "%");
+                }
+                try (ResultSet rs = pstmt.executeQuery()) {
+                    int stt = 1;
+                    while (rs.next()) {
+                        // ----- Chỉ lấy 5 cột thực sự tồn tại trong DB + 1 giá trị rỗng cho LOAIKH -----
+                        rows.add(new Object[]{
+                            stt++,
+                            rs.getString("MAKH"),
+                            rs.getString("TENKH"),
+                            rs.getString("SDT"),
+                            rs.getString("EMAIL"),
+                            rs.getString("DIACHI"),
+                            ""  // Thay vì rs.getString("LOAIKH"), vì cột LOAIKH đã bị xóa ở DB
+                        });
                     }
-                    try (ResultSet rs = pstmt.executeQuery()) {
-                        int stt = 1;
-                        while (rs.next()) {
-                            rows.add(new Object[]{
-                                    stt++, rs.getString("MAKH"), rs.getString("TENKH"),
-                                    rs.getString("SDT"), rs.getString("EMAIL"),
-                                    rs.getString("DIACHI"), rs.getString("LOAIKH")
-                            });
-                        }
-                    }
-                } // Connection, PreparedStatement, ResultSet sẽ tự đóng với try-with-resources
-                return rows;
-            }
-            @Override
-            protected void done() {
-                try {
-                    List<Object[]> resultRows = get();
-                    for (Object[] row : resultRows) tableModel.addRow(row);
-                } catch (InterruptedException | ExecutionException e) {
-                    e.printStackTrace();
-                    JOptionPane.showMessageDialog(QuanLyKhachHang.this,
-                            "Lỗi khi tải dữ liệu: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
                 }
             }
-        };
-        worker.execute();
-    }
+            return rows;
+        }
+
+        @Override
+        protected void done() {
+            try {
+                List<Object[]> resultRows = get();
+                for (Object[] row : resultRows) {
+                    tableModel.addRow(row);
+                }
+            } catch (InterruptedException | ExecutionException e) {
+                e.printStackTrace();
+                JOptionPane.showMessageDialog(QuanLyKhachHang.this,
+                        "Lỗi khi tải dữ liệu: " + e.getMessage(),
+                        "Lỗi", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    };
+    worker.execute();
+}
+
 
     private void loadCustomerData() {
-        executeDataLoad("SELECT * FROM KHACHHANG ORDER BY MAKH", null);
-    }
+    // Vẫn để SELECT * vì executeDataLoad() chỉ truy xuất đúng 5 cột + bỏ qua LOAIKH
+    executeDataLoad("SELECT * FROM KHACHHANG ORDER BY MAKH", null);
+}
 
     private void searchCustomerData() {
-        String key = txtSearch.getText().trim();
-        if (key.isEmpty()) loadCustomerData();
-        else executeDataLoad("SELECT * FROM KHACHHANG WHERE MAKH LIKE ? ORDER BY MAKH", key);
+    String key = txtSearch.getText().trim();
+    if (key.isEmpty()) {
+        loadCustomerData();
+    } else {
+        executeDataLoad(
+            "SELECT * FROM KHACHHANG WHERE MAKH LIKE ? ORDER BY MAKH",
+            key
+        );
     }
+}
 
     private void clearForm() {
         txtMaKH.setText(""); txtMaKH.setEditable(true);

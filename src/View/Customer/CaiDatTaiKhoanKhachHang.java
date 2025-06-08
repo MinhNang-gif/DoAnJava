@@ -24,7 +24,6 @@ public class CaiDatTaiKhoanKhachHang extends javax.swing.JFrame {
     private JTextField txtSdt;
     private JTextField txtDiaChi;
     private JTextField txtEmail;
-    private JLabel lblLoaiKhachHang;
     private JLabel lblMaKHDisplay;
 
     private JPasswordField txtMatKhauHienTai;
@@ -129,9 +128,6 @@ public class CaiDatTaiKhoanKhachHang extends javax.swing.JFrame {
         txtSdt = createStyledTextField();
         txtDiaChi = createStyledTextField();
         txtEmail = createStyledTextField();
-        lblLoaiKhachHang = new JLabel("Đang tải...");
-        lblLoaiKhachHang.setFont(TEXT_FIELD_FONT);
-        lblLoaiKhachHang.setForeground(Color.DARK_GRAY);
         
         lblMaKHDisplay = new JLabel(this.currentMaKhachHang != null ? this.currentMaKhachHang : "N/A");
         lblMaKHDisplay.setFont(new Font("Segoe UI", Font.BOLD, 14));
@@ -142,7 +138,6 @@ public class CaiDatTaiKhoanKhachHang extends javax.swing.JFrame {
         infoRow = addField(thongTinPanel, gbcInfo, infoRow, "Số điện thoại (*):", txtSdt);
         infoRow = addField(thongTinPanel, gbcInfo, infoRow, "Địa chỉ:", txtDiaChi);
         infoRow = addField(thongTinPanel, gbcInfo, infoRow, "Email (*):", txtEmail);
-        infoRow = addField(thongTinPanel, gbcInfo, infoRow, "Loại khách hàng:", lblLoaiKhachHang);
 
         JPanel matKhauPanel = new JPanel(new GridBagLayout());
         matKhauPanel.setBorder(BorderFactory.createTitledBorder(
@@ -245,10 +240,13 @@ public class CaiDatTaiKhoanKhachHang extends javax.swing.JFrame {
         }
         if(lblMaKHDisplay != null) lblMaKHDisplay.setText(this.currentMaKhachHang);
 
-        String sql = "SELECT kh.TENKH, kh.SDT, kh.DIACHI, kh.EMAIL AS KHACHHANG_EMAIL, kh.LOAIKH, kh.ACCOUNT_ID, acc.USER_ID " +
-                     "FROM KHACHHANG kh " +
-                     "LEFT JOIN ACCOUNT acc ON kh.ACCOUNT_ID = acc.ACCOUNT_ID " +
-                     "WHERE kh.MAKH = ?";
+        String sql =
+            "SELECT kh.TENKH, kh.SDT, kh.DIACHI, kh.EMAIL AS KHACHHANG_EMAIL, " +
+            "       kh.ACCOUNT_ID, acc.USER_ID " +
+            "FROM   KHACHHANG kh " +
+            "LEFT JOIN ACCOUNT acc ON kh.ACCOUNT_ID = acc.ACCOUNT_ID " +
+            "WHERE  kh.MAKH = ?";
+
         try (Connection conn = ConnectionOracle.getOracleConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, this.currentMaKhachHang);
             ResultSet rs = pstmt.executeQuery();
@@ -257,7 +255,6 @@ public class CaiDatTaiKhoanKhachHang extends javax.swing.JFrame {
                 txtSdt.setText(rs.getString("SDT"));
                 txtDiaChi.setText(rs.getString("DIACHI"));
                 txtEmail.setText(rs.getString("KHACHHANG_EMAIL"));
-                lblLoaiKhachHang.setText(rs.getString("LOAIKH") != null ? rs.getString("LOAIKH") : "Chưa xác định");
                 this.currentAccountId = rs.getInt("ACCOUNT_ID");
                 if (rs.wasNull()) this.currentAccountId = -1;
                 this.currentUserId = rs.getInt("USER_ID");

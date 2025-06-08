@@ -293,16 +293,15 @@ public class DangKyTaiKhoanKhachHang extends javax.swing.JFrame {
             String newMaKh = generateNewMaKh(con);
 
             // 5. Insert vào KHACHHANG
-            String sqlInsertKhachHang = "INSERT INTO KHACHHANG (MAKH, TENKH, SDT, DIACHI, EMAIL, LOAIKH, ACCOUNT_ID) " +
-                                        "VALUES (?, ?, ?, ?, ?, ?, ?)";
+            String sqlInsertKhachHang = "INSERT INTO KHACHHANG (MAKH, TENKH, SDT, DIACHI, EMAIL, ACCOUNT_ID) " +
+                                        "VALUES (?, ?, ?, ?, ?, ?)";
             try (PreparedStatement psKhachHang = con.prepareStatement(sqlInsertKhachHang)) {
                 psKhachHang.setString(1, newMaKh);
                 psKhachHang.setString(2, fullName); // TENKH
                 psKhachHang.setString(3, sdt);
                 psKhachHang.setString(4, diaChi);
                 psKhachHang.setString(5, email);    // EMAIL trong KHACHHANG
-                psKhachHang.setString(6, loaiKh);
-                psKhachHang.setInt(7, newAccountId); // Liên kết với ACCOUNT
+                psKhachHang.setInt(6, newAccountId); // Liên kết với ACCOUNT
                 psKhachHang.executeUpdate();
             }
 
@@ -364,18 +363,38 @@ public class DangKyTaiKhoanKhachHang extends javax.swing.JFrame {
         }
     }
 
-    private String generateNewMaKh(Connection con) throws SQLException {
-        String sqlMaxMaKH = "SELECT MAX(TO_NUMBER(SUBSTR(MAKH, 3))) FROM KHACHHANG WHERE MAKH LIKE 'KH%'";
-        int nextId = 1;
-        try (PreparedStatement ps = con.prepareStatement(sqlMaxMaKH);
-             ResultSet rs = ps.executeQuery()) {
-            if (rs.next()) {
-                nextId = rs.getInt(1) + 1;
-                if (rs.wasNull() || nextId <= 1) { nextId = 1; }
+    /**
+ * Sinh mã khách hàng dạng "KHxxx" dựa trên MAX(SUBSTR(MAKH, 3)).
+ * - Nếu bảng KHACHHANG chưa có bản ghi nào, nextId = 1 (→ "KH001").
+ * - Nếu đã có mã "KH005" và "KH012", MAX(5,12) = 12 → nextId = 13 → "KH013".
+ */
+private String generateNewMaKh(Connection con) throws SQLException {
+    // 1. Lấy giá trị số lớn nhất hiện có: TO_NUMBER(SUBSTR(MAKH,3))
+    //    Nếu KHACHHANG trống, MAX(...) trả về NULL.
+    String sqlMaxMaKH = "SELECT MAX(TO_NUMBER(SUBSTR(MAKH, 3))) FROM KHACHHANG";
+    
+    try (PreparedStatement ps = con.prepareStatement(sqlMaxMaKH);
+         ResultSet rs = ps.executeQuery()) {
+         
+        int nextId = 1; // Mặc định là 1 nếu chưa có bản ghi nào
+        if (rs.next()) {
+            int maxSo = rs.getInt(1);
+            // rs.getInt(1) trả về 0 nếu giá trị là NULL; nhưng getInt kiểm tra wasNull() sau:
+            if (!rs.wasNull()) {
+                nextId = maxSo + 1;
             }
         }
+        
+        // Đảm bảo nextId luôn >= 1
+        if (nextId < 1) {
+            nextId = 1;
+        }
+        
+        // Trả về mã: "KH" + 3 chữ số, ví dụ KH001, KH013, KH125
         return String.format("KH%03d", nextId);
     }
+}
+
 
     public static void main(String args[]) {
         java.awt.EventQueue.invokeLater(() -> new DangKyTaiKhoanKhachHang().setVisible(true));

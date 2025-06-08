@@ -7,6 +7,8 @@ import javax.swing.border.*;
 import java.awt.image.BufferedImage;
 import java.net.URL;
 import com.formdev.flatlaf.FlatLightLaf;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 
 public class AdminHomePage extends javax.swing.JFrame {
@@ -253,9 +255,16 @@ public class AdminHomePage extends javax.swing.JFrame {
                         AdminHomePage.this.dispose();
                         break;
                     case "Quản lý doanh thu & Thống kê":
-                         new QuanLyDoanhThuVaThongKe().setVisible(true); // Giả sử class này tồn tại
+                    {
+                        try {
+                            new QuanLyDoanhThuVaThongKe().setVisible(true); // Giả sử class này tồn tại
+                        } catch (ClassNotFoundException ex) {
+                            Logger.getLogger(AdminHomePage.class.getName()).log(Level.SEVERE, null, ex);
+                        }
+                    }
                         AdminHomePage.this.dispose();
                         break;
+
                     case "Quản lý sự cố":
                          new QuanLySuCo(AdminHomePage.this).setVisible(true); // Giả sử class này tồn tại
                         AdminHomePage.this.setVisible(false);

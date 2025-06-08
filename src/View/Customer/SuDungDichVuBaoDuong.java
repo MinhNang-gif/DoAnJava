@@ -378,161 +378,239 @@ public class SuDungDichVuBaoDuong extends javax.swing.JFrame {
     }
 
     private void showDatLichBaoDuongPanel() {
-        JPanel datLichPanel = new JPanel(new BorderLayout(10,10));
-        datLichPanel.setBackground(WHITE_COLOR); 
-        datLichPanel.setBorder(BorderFactory.createCompoundBorder(new RoundedBorder(BORDER_COLOR, 15, 1), new EmptyBorder(20,20,20,20)));
-        
-        JLabel title = new JLabel("Đặt Lịch Bảo Dưỡng Xe", SwingConstants.CENTER); 
-        title.setFont(FONT_SUBTITLE); 
-        title.setForeground(TEXT_COLOR_DARK); 
-        datLichPanel.add(title, BorderLayout.NORTH);
-        
-        JPanel formPanel = new JPanel(new GridBagLayout()); 
-        formPanel.setOpaque(false); 
-        GridBagConstraints gbc = new GridBagConstraints(); 
-        gbc.insets = new Insets(8, 8, 8, 8); // Giảm khoảng cách để vừa thêm trường
-        gbc.anchor = GridBagConstraints.WEST;
-        
-        // Hàng 0: Nhập biển số xe
-        gbc.gridx = 0; gbc.gridy = 0; 
-        formPanel.add(new JLabel("Nhập biển số xe:"), gbc);
-        gbc.gridx = 1; gbc.gridy = 0; 
-        gbc.fill = GridBagConstraints.HORIZONTAL; 
-        gbc.weightx = 1.0; 
-        txtBienSoDatLich = new JTextField(20); 
-        txtBienSoDatLich.setFont(FONT_TEXT_FIELD);
-        formPanel.add(txtBienSoDatLich, gbc); 
-        gbc.fill = GridBagConstraints.NONE; 
-        gbc.weightx = 0;
+    // Panel chính
+    JPanel datLichPanel = new JPanel(new BorderLayout(10, 10));
+    datLichPanel.setBackground(WHITE_COLOR);
+    datLichPanel.setBorder(BorderFactory.createCompoundBorder(
+        BorderFactory.createLineBorder(BORDER_COLOR, 15, true),
+        BorderFactory.createEmptyBorder(20, 20, 20, 20)
+    ));
 
-        // Hàng 1: Chọn loại xe
-        gbc.gridx = 0; gbc.gridy = 1;
-        formPanel.add(new JLabel("Loại xe:"), gbc);
-        gbc.gridx = 1; gbc.gridy = 1;
-        gbc.fill = GridBagConstraints.HORIZONTAL; gbc.weightx = 1.0;
-        cbLoaiXeDatLich = new JComboBox<>(new String[]{"Ô tô", "Xe máy"});
-        cbLoaiXeDatLich.setFont(FONT_TEXT_FIELD);
-        formPanel.add(cbLoaiXeDatLich, gbc);
-        gbc.fill = GridBagConstraints.NONE; gbc.weightx = 0;
+    // Tiêu đề
+    JLabel title = new JLabel("Đặt Lịch Bảo Dưỡng Xe", SwingConstants.CENTER);
+    title.setFont(FONT_SUBTITLE);
+    title.setForeground(TEXT_COLOR_DARK);
+    datLichPanel.add(title, BorderLayout.NORTH);
 
-        // Hàng 2: Chọn dịch vụ
-        gbc.gridx = 0; gbc.gridy = 2; 
-        formPanel.add(new JLabel("Chọn dịch vụ:"), gbc);
-        gbc.gridx = 1; gbc.gridy = 2; gbc.fill = GridBagConstraints.HORIZONTAL; gbc.weightx = 1.0; 
-        cbDichVuDatLich = new JComboBox<>(); 
-        List<DichVuDisplay> dsDichVu = loadDichVuBaoDuong(); 
-        if (dsDichVu.isEmpty()) { 
-            cbDichVuDatLich.addItem(new DichVuDisplay("", "Không có dịch vụ",0)); 
-            cbDichVuDatLich.setEnabled(false); 
-        } else { 
-            for (DichVuDisplay dv : dsDichVu) cbDichVuDatLich.addItem(dv); 
-        } 
-        cbDichVuDatLich.setFont(FONT_TEXT_FIELD); 
-        formPanel.add(cbDichVuDatLich, gbc); 
-        gbc.fill = GridBagConstraints.NONE; gbc.weightx = 0;
-        
-        // Hàng 3: Chọn ngày bảo dưỡng
-        gbc.gridx = 0; gbc.gridy = 3; 
-        formPanel.add(new JLabel("Chọn ngày bảo dưỡng:"), gbc);
-        gbc.gridx = 1; gbc.gridy = 3; gbc.fill = GridBagConstraints.HORIZONTAL; 
-        dateChooserDatLich = new JDateChooser(); 
-        dateChooserDatLich.setDateFormatString("dd/MM/yyyy"); 
-        dateChooserDatLich.setFont(FONT_TEXT_FIELD); 
-        dateChooserDatLich.setMinSelectableDate(new Date()); 
-        formPanel.add(dateChooserDatLich, gbc); gbc.fill = GridBagConstraints.NONE;
-        
-        // Hàng 4: Chọn giờ
-        gbc.gridx = 0; gbc.gridy = 4; 
-        formPanel.add(new JLabel("Chọn giờ:"), gbc);
-        gbc.gridx = 1; gbc.gridy = 4; 
-        cbGioDatLich = new JComboBox<>(new String[]{"08:00", "08:30", "09:00", "09:30", "10:00", "10:30", "11:00", "11:30", "13:00", "13:30", "14:00", "14:30", "15:00", "15:30", "16:00", "16:30"}); 
-        cbGioDatLich.setFont(FONT_TEXT_FIELD); 
-        formPanel.add(cbGioDatLich, gbc);
-        
-        datLichPanel.add(formPanel, BorderLayout.CENTER);
-        
-        JButton btnDatLich = new JButton("Đặt Lịch"); 
-        btnDatLich.setFont(FONT_BUTTON); 
-        btnDatLich.setBackground(PRIMARY_COLOR); 
-        btnDatLich.setForeground(WHITE_COLOR); 
-        btnDatLich.setPreferredSize(new Dimension(120, 40)); 
-        btnDatLich.addActionListener(e -> {
-            try {
-                String bienSoXeNhap = txtBienSoDatLich.getText(); 
-                String loaiXeChon = (String) cbLoaiXeDatLich.getSelectedItem();
+    // Form nhập liệu
+    JPanel formPanel = new JPanel(new GridBagLayout());
+    formPanel.setOpaque(false);
+    GridBagConstraints gbc = new GridBagConstraints();
+    gbc.insets = new Insets(8, 8, 8, 8);
+    gbc.anchor = GridBagConstraints.WEST;
 
-                if (!handleXeRegistrationAndValidation(bienSoXeNhap, this.currentMaKH, loaiXeChon)) {
-                    // Thông báo lỗi đã được hiển thị trong handleXeRegistrationAndValidation
-                    if (txtBienSoDatLich != null) txtBienSoDatLich.requestFocus();
-                    return;
-                }
-                // Nếu tới đây, biển số xe hợp lệ hoặc đã được đăng ký thành công.
-                String validatedBienSo = bienSoXeNhap.trim().toUpperCase(); 
+    // Biển số
+    gbc.gridx = 0; gbc.gridy = 0;
+    formPanel.add(new JLabel("Nhập biển số xe:"), gbc);
+    gbc.gridx = 1;
+    JTextField txtBienSo = new JTextField(15);
+    txtBienSo.setFont(FONT_TEXT_FIELD);
+    formPanel.add(txtBienSo, gbc);
 
-                DichVuDisplay selectedDichVu = (DichVuDisplay) cbDichVuDatLich.getSelectedItem();
-                Date selectedDate = dateChooserDatLich.getDate(); 
-                String gioChon = (String) cbGioDatLich.getSelectedItem();
+    // Loại xe
+    gbc.gridx = 0; gbc.gridy = 1;
+    formPanel.add(new JLabel("Chọn loại xe:"), gbc);
+    gbc.gridx = 1;
+    JComboBox<String> cbLoaiXe = new JComboBox<>(new String[]{"Xe máy", "Ô tô"});
+    cbLoaiXe.setFont(FONT_TEXT_FIELD);
+    formPanel.add(cbLoaiXe, gbc);
 
-                if (!cbDichVuDatLich.isEnabled() || selectedDichVu == null || selectedDichVu.getMaDV().isEmpty()) {
-                    JOptionPane.showMessageDialog(this, "Vui lòng chọn dịch vụ hợp lệ.", "Thiếu thông tin", JOptionPane.WARNING_MESSAGE);
-                    return;
-                }
-                if (selectedDate == null) {
-                    JOptionPane.showMessageDialog(this, "Vui lòng chọn ngày bảo dưỡng.", "Thiếu thông tin", JOptionPane.WARNING_MESSAGE);
-                    return;
-                }
-                Calendar calSelected = Calendar.getInstance();
-                calSelected.setTime(selectedDate);
-                Calendar calToday = Calendar.getInstance();
-                calToday.set(Calendar.HOUR_OF_DAY, 0); calToday.set(Calendar.MINUTE, 0);
-                calToday.set(Calendar.SECOND, 0); calToday.set(Calendar.MILLISECOND, 0);
-                if (calSelected.before(calToday)) {
-                     JOptionPane.showMessageDialog(this, "Ngày bảo dưỡng không được là ngày trong quá khứ.", "Ngày không hợp lệ", JOptionPane.WARNING_MESSAGE);
-                    return;
-                }
+    // Dịch vụ bảo dưỡng
+    gbc.gridx = 0; gbc.gridy = 2;
+    formPanel.add(new JLabel("Chọn dịch vụ:"), gbc);
+    gbc.gridx = 1;
+    JComboBox<DichVuDisplay> cbDV = new JComboBox<>(loadDichVuBaoDuong().toArray(new DichVuDisplay[0]));
+    cbDV.setFont(FONT_TEXT_FIELD);
+    formPanel.add(cbDV, gbc);
 
-                SimpleDateFormat dateFormatForDB = new SimpleDateFormat("yyyy-MM-dd");
-                String ngayChonStr = dateFormatForDB.format(selectedDate);
-                String ngayGioBaoDuongStr = ngayChonStr + " " + gioChon + ":00";
+    // Ngày
+    gbc.gridx = 0; gbc.gridy = 3;
+    formPanel.add(new JLabel("Chọn ngày:"), gbc);
+    gbc.gridx = 1;
+    JDateChooser dateChooser = new JDateChooser();
+    dateChooser.setDateFormatString("yyyy-MM-dd");
+    dateChooser.setPreferredSize(new Dimension(150, 25));
+    formPanel.add(dateChooser, gbc);
 
-                String sqlInsert = "INSERT INTO BAODUONGXE (MABAODUONG, BIENSO, MADVBAODUONG, TRANGTHAI, NGAYBAODUONG) " +
-                                   "VALUES (?, ?, ?, 'CHO THUC HIEN', TO_DATE(?, 'YYYY-MM-DD HH24:MI:SS'))";
+    // Giờ
+    gbc.gridx = 0; gbc.gridy = 4;
+    formPanel.add(new JLabel("Chọn giờ:"), gbc);
+    gbc.gridx = 1;
+    JComboBox<String> cbGio = new JComboBox<>(new String[]{
+        "08:00","08:30","09:00","09:30","10:00","10:30",
+        "11:00","11:30","13:00","13:30","14:00","14:30",
+        "15:00","15:30","16:00","16:30"
+    });
+    cbGio.setFont(FONT_TEXT_FIELD);
+    formPanel.add(cbGio, gbc);
 
-                try (Connection conn = ConnectionOracle.getOracleConnection();
-                    PreparedStatement pstmt = conn.prepareStatement(sqlInsert)) {
-                    String maBaoDuong = generateNewMaBaoDuong(conn, "BD");
-                    pstmt.setString(1, maBaoDuong);
-                    pstmt.setString(2, validatedBienSo); 
-                    pstmt.setString(3, selectedDichVu.getMaDV());
-                    pstmt.setString(4, ngayGioBaoDuongStr);
+    datLichPanel.add(formPanel, BorderLayout.CENTER);
 
-                    int affectedRows = pstmt.executeUpdate();
-                    if (affectedRows > 0) {
-                        JOptionPane.showMessageDialog(this, "Đặt lịch bảo dưỡng thành công! Mã: " + maBaoDuong, "Thông báo", JOptionPane.INFORMATION_MESSAGE);
-                        if (txtBienSoDatLich != null) txtBienSoDatLich.setText(""); 
-                        if (cbLoaiXeDatLich != null && cbLoaiXeDatLich.getItemCount() > 0) cbLoaiXeDatLich.setSelectedIndex(0);
-                        if (dateChooserDatLich != null) dateChooserDatLich.setDate(null); 
-                        if (cbDichVuDatLich != null && cbDichVuDatLich.getItemCount() > 0 && cbDichVuDatLich.isEnabled()) cbDichVuDatLich.setSelectedIndex(0);
-                        if (cbGioDatLich != null && cbGioDatLich.getItemCount() > 0) cbGioDatLich.setSelectedIndex(0);
-                    } else {
-                        JOptionPane.showMessageDialog(this, "Đặt lịch thất bại. Không có bản ghi nào được thêm. Vui lòng thử lại.", "Lỗi Hệ Thống", JOptionPane.ERROR_MESSAGE);
-                    }
-                } catch (SQLException sqle) {
-                    sqle.printStackTrace();
-                    JOptionPane.showMessageDialog(this, "Lỗi khi đặt lịch vào database: " + sqle.getMessage() + "\nError Code: " + sqle.getErrorCode(), "Lỗi Database", JOptionPane.ERROR_MESSAGE);
-                } // Không cần catch ClassNotFoundException ở đây vì đã có trong handleXeRegistrationAndValidation nếu nó được gọi từ đó
-            } catch (Exception ex) { 
-                 ex.printStackTrace();
-                JOptionPane.showMessageDialog(this, "Có lỗi không mong muốn xảy ra: " + ex.getMessage(), "Lỗi Hệ Thống", JOptionPane.ERROR_MESSAGE);
+    // Nút Đặt Lịch
+    JButton btnDatLich = new JButton("Đặt Lịch");
+    btnDatLich.setFont(FONT_BUTTON);
+    btnDatLich.setBackground(PRIMARY_COLOR);
+    btnDatLich.setForeground(WHITE_COLOR);
+    btnDatLich.setPreferredSize(new Dimension(120, 40));
+    btnDatLich.addActionListener(e -> {
+        try {
+            // 1. Lấy và validate
+            String bienSoNhap = txtBienSo.getText().trim().toUpperCase();
+            String loaiXe = (String) cbLoaiXe.getSelectedItem();
+            if (!handleXeRegistrationAndValidation(bienSoNhap, this.currentMaKH, loaiXe)) {
+                txtBienSo.requestFocus();
+                return;
             }
-        });
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER)); 
-        buttonPanel.setOpaque(false); 
-        buttonPanel.setBorder(new EmptyBorder(10,0,0,0)); 
-        buttonPanel.add(btnDatLich); 
-        datLichPanel.add(buttonPanel, BorderLayout.SOUTH);
-        switchMainPanel(datLichPanel, "DatLich");
+
+            DichVuDisplay dv = (DichVuDisplay) cbDV.getSelectedItem();
+            Date ngay = dateChooser.getDate();
+            String gio = (String) cbGio.getSelectedItem();
+            if (ngay == null || gio == null) {
+                JOptionPane.showMessageDialog(this,
+                    "Vui lòng chọn đầy đủ ngày và giờ.",
+                    "Thiếu thông tin", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            // Kiểm tra ngày không nằm trong quá khứ
+            Calendar cSel = Calendar.getInstance();
+            cSel.setTime(ngay);
+            String[] parts = gio.split(":");
+            cSel.set(Calendar.HOUR_OF_DAY, Integer.parseInt(parts[0]));
+            cSel.set(Calendar.MINUTE, Integer.parseInt(parts[1]));
+            Calendar cNow = Calendar.getInstance();
+            cNow.set(Calendar.MINUTE, 0);
+            cNow.set(Calendar.SECOND, 0);
+            cNow.set(Calendar.MILLISECOND, 0);
+            if (cSel.before(cNow)) {
+                JOptionPane.showMessageDialog(this,
+                    "Ngày không được nằm trong quá khứ.",
+                    "Ngày sai", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            // Chuẩn bị chuỗi ngày giờ
+            SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+            String ngayStr = df.format(ngay);
+            String ngayGio = ngayStr + " " + gio + ":00";
+
+            String sqlBD =
+                "INSERT INTO BAODUONGXE " +
+                "(MABAODUONG, BIENSO, MADVBAODUONG, TRANGTHAI, NGAYBAODUONG) " +
+                "VALUES (?, ?, ?, 'CHO THUC HIEN', TO_DATE(?, 'YYYY-MM-DD HH24:MI:SS'))";
+
+            try (Connection conn = ConnectionOracle.getOracleConnection();
+                 PreparedStatement pBD = conn.prepareStatement(sqlBD)) {
+
+                // 4.1 Lưu lịch bảo dưỡng
+                String maBD = generateNewMaBaoDuong(conn, "BD");
+                pBD.setString(1, maBD);
+                pBD.setString(2, bienSoNhap);
+                pBD.setString(3, dv.getMaDV());
+                pBD.setString(4, ngayGio);
+
+                int k = pBD.executeUpdate();
+                if (k <= 0) {
+                    throw new SQLException("Không chèn được bản ghi bảo dưỡng");
+                }
+
+                // Thông báo
+                JOptionPane.showMessageDialog(this,
+                    "Đặt lịch thành công! Mã: " + maBD,
+                    "OK", JOptionPane.INFORMATION_MESSAGE);
+
+                // 4.2 Tạo hóa đơn
+                String maHD = generateNewMaHoaDon(conn, "HD");
+                String sqlHD =
+                    "INSERT INTO HOADON " +
+                    "(MAHOADON, MAKH, LOAIHOADON, NGAYLAP, TONGTIEN, TRANGTHAI) " +
+                    "VALUES (?, ?, 'VE_BAO_DUONG', SYSTIMESTAMP, ?, 'CHUA THANH TOAN')";
+                try (PreparedStatement pHD = conn.prepareStatement(sqlHD)) {
+                    pHD.setString(1, maHD);
+                    pHD.setString(2, this.currentMaKH);
+                    pHD.setDouble(3, dv.getGia());
+                    pHD.executeUpdate();
+                }
+
+                // 4.3 Tạo chi tiết hóa đơn
+                String maCT = generateNewMaChiTietHD(conn, "CTHD");
+                String sqlCT =
+                    "INSERT INTO CHITIETHOADON " +
+                    "(MACTHD, MAHOADON, MADVBAODUONG, SOLUONG) " +
+                    "VALUES (?, ?, ?, 1)";
+                try (PreparedStatement pCT = conn.prepareStatement(sqlCT)) {
+                    pCT.setString(1, maCT);
+                    pCT.setString(2, maHD);
+                    pCT.setString(3, dv.getMaDV());
+                    pCT.executeUpdate();
+                }
+
+                // 5. Reset form
+                txtBienSo.setText("");
+                cbLoaiXe.setSelectedIndex(0);
+                cbDV.setSelectedIndex(0);
+                dateChooser.setDate(null);
+                cbGio.setSelectedIndex(0);
+
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(this,
+                    "Lỗi DB: " + ex.getMessage(),
+                    "Lỗi", JOptionPane.ERROR_MESSAGE);
+            }
+
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(this,
+                "Lỗi hệ thống: " + ex.getMessage(),
+                "Lỗi", JOptionPane.ERROR_MESSAGE);
+        }
+    });
+
+    // Panel nút
+    JPanel btnPanel = new JPanel();
+    btnPanel.setOpaque(false);
+    btnPanel.setBorder(new EmptyBorder(10,0,0,0));
+    btnPanel.add(btnDatLich);
+    datLichPanel.add(btnPanel, BorderLayout.SOUTH);
+
+    // Hiển thị lên màn hình
+    switchMainPanel(datLichPanel, "DatLichBaoDuong");
+}
+    
+    // Sinh mã hóa đơn mới: HD001, HD002, …
+private String generateNewMaHoaDon(Connection conn, String prefix) throws SQLException {
+    String sql = "SELECT MAX(MAHOADON) FROM HOADON WHERE MAHOADON LIKE ?";
+    try (PreparedStatement ps = conn.prepareStatement(sql)) {
+        ps.setString(1, prefix + "%");
+        ResultSet rs = ps.executeQuery();
+        String last = rs.next() ? rs.getString(1) : null;
+        return incrementKey(prefix, last);
     }
+}
+
+// Sinh mã chi tiết hóa đơn mới: CTHD001, CTHD002, …
+private String generateNewMaChiTietHD(Connection conn, String prefix) throws SQLException {
+    String sql = "SELECT MAX(MACTHD) FROM CHITIETHOADON WHERE MACTHD LIKE ?";
+    try (PreparedStatement ps = conn.prepareStatement(sql)) {
+        ps.setString(1, prefix + "%");
+        ResultSet rs = ps.executeQuery();
+        String last = rs.next() ? rs.getString(1) : null;
+        return incrementKey(prefix, last);
+    }
+}
+
+// Helper tăng số cuối: HD009 → HD010, hoặc null → HD001
+private String incrementKey(String prefix, String lastKey) {
+    if (lastKey == null) {
+        return prefix + "001";
+    }
+    String num = lastKey.substring(prefix.length());
+    int val = Integer.parseInt(num) + 1;
+    return String.format("%s%03d", prefix, val);
+}
+
+
     
     /**
      * Kiểm tra biển số xe. Nếu xe đã tồn tại, xác minh quyền sở hữu.

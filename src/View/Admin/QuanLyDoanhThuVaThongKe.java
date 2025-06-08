@@ -38,10 +38,31 @@ import org.jfree.data.category.DefaultCategoryDataset;
 
 // Import for AdminHomePage to enable back button functionality
 import View.Admin.AdminHomePage;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import org.jfree.chart.renderer.category.CategoryItemRenderer;
 import org.jfree.chart.title.LegendTitle;
 import org.jfree.chart.ui.RectangleInsets;
 
+// Import cho PDFBox để xuất báo cáo
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDPage;
+import org.apache.pdfbox.pdmodel.PDPageContentStream;
+import org.apache.pdfbox.pdmodel.common.PDRectangle;
+import org.apache.pdfbox.pdmodel.font.PDType0Font;
+import org.apache.pdfbox.pdmodel.font.PDFont;
+import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
+
+import javax.swing.filechooser.FileNameExtensionFilter;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.util.Optional;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.swing.event.ListSelectionEvent;
 
 
 
@@ -55,33 +76,37 @@ public class QuanLyDoanhThuVaThongKe extends javax.swing.JFrame {
     private static final Color COLOR_BACKGROUND = new Color(240, 245, 250);
     private static final Color COLOR_BLUE_CUSTOM = new Color(80, 120, 200);
     private static final Color COLOR_RED_CUSTOM = new Color(222, 78, 78);
-
+    private static final Color COLOR_EXPORT_BUTTON = new Color(0, 123, 255);
 
     private JDateChooser dcStartDateRevenue, dcEndDateRevenue;
     private JTable tblRevenue;
     private DefaultTableModel modelRevenue;
     private JLabel lblTotalRevenue;
     private ChartPanel chartPanelRevenue;
+    private JButton btnExportRevenueReport; // Nút xuất báo cáo doanh thu
 
     private JDateChooser dcStartDateIncomeExpense, dcEndDateIncomeExpense;
     private JTable tblIncome, tblExpense;
     private DefaultTableModel modelIncome, modelExpense;
     private JLabel lblTotalIncome, lblTotalExpense, lblNetProfit;
     private ChartPanel chartPanelIncomeExpense;
+    private JButton btnExportIncomeExpenseReport; // Nút xuất báo cáo thu chi
 
     private JTextField txtSearchInvoice;
     private JDateChooser dcStartDateInvoice, dcEndDateInvoice;
     private JTable tblInvoices, tblInvoiceDetails;
     private DefaultTableModel modelInvoices, modelInvoiceDetails;
+    private JButton       btnSearchInvoice;
 
     private final SimpleDateFormat displayDateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
     private final SimpleDateFormat queryDateFormat = new SimpleDateFormat("yyyy-MM-dd");
     private final SimpleDateFormat chartDailyKeyFormat = new SimpleDateFormat("dd/MM/yy");
+    private final SimpleDateFormat reportDateFormat = new SimpleDateFormat("dd/MM/yyyy");
+    private final SimpleDateFormat fileNameDateFormat = new SimpleDateFormat("ddMMyyyy");
     private final DecimalFormat currencyFormat = new DecimalFormat("###,##0");
     private final DecimalFormat currencyFormatVND = new DecimalFormat("###,##0 VND");
 
-
-    public QuanLyDoanhThuVaThongKe() {
+    public QuanLyDoanhThuVaThongKe() throws ClassNotFoundException {
         try {
             UIManager.setLookAndFeel(new FlatLightLaf());
         } catch (UnsupportedLookAndFeelException ex) {
@@ -106,7 +131,26 @@ public class QuanLyDoanhThuVaThongKe extends javax.swing.JFrame {
 
         tabbedPane.addTab("Thống Kê Doanh Thu", createRevenuePanel());
         tabbedPane.addTab("Thống Kê Thu Chi", createIncomeExpensePanel());
-        tabbedPane.addTab("Tra Cứu Hóa Đơn", createInvoiceLookupPanel());
+
+JScrollPane invoicePanel = createInvoiceLookupPanel();
+
+// Nếu đã có >= 3 tab, thì “thay thế” tab thứ 3,
+// ngược lại thì “thêm” mới tab thứ 3.
+if (tabbedPane.getTabCount() > 2) {
+    tabbedPane.setComponentAt(2, invoicePanel);
+    tabbedPane.setTitleAt(2, "Tra Cứu Hóa Đơn");
+} else {
+    tabbedPane.addTab("Tra Cứu Hóa Đơn", invoicePanel);
+}
+
+// --- phần đặt ngày mặc định, load data vẫn như cũ ---
+Calendar cal = Calendar.getInstance();
+Date end = cal.getTime();
+cal.add(Calendar.MONTH, -1);
+Date start = cal.getTime();
+dcStartDateInvoice.setDate(start);
+dcEndDateInvoice.setDate(end);
+performInvoiceSearch("", start, end);
 
         add(tabbedPane, BorderLayout.CENTER);
 
@@ -167,7 +211,6 @@ public class QuanLyDoanhThuVaThongKe extends javax.swing.JFrame {
         }
         return true;
     }
-
 
     private JFreeChart createBarChart(DefaultCategoryDataset dataset, String title, String categoryAxisLabel, String valueAxisLabel, boolean isRevenueChart) {
         JFreeChart barChart = ChartFactory.createBarChart(
@@ -298,11 +341,20 @@ public class QuanLyDoanhThuVaThongKe extends javax.swing.JFrame {
         btnViewRevenue.setFont(FONT_BUTTON);
         btnViewRevenue.addActionListener(this::viewRevenueAction);
 
+        // Thêm nút xuất báo cáo doanh thu
+        btnExportRevenueReport = new JButton("Xuất Báo Cáo");
+        btnExportRevenueReport.setFont(FONT_BUTTON);
+        btnExportRevenueReport.setBackground(COLOR_EXPORT_BUTTON);
+        btnExportRevenueReport.setForeground(Color.WHITE);
+        btnExportRevenueReport.setFocusPainted(false);
+        btnExportRevenueReport.addActionListener(this::exportRevenueReportAction);
+
         pnlControls.add(new JLabel("Từ ngày:"));
         pnlControls.add(dcStartDateRevenue);
         pnlControls.add(new JLabel("Đến ngày:"));
         pnlControls.add(dcEndDateRevenue);
         pnlControls.add(btnViewRevenue);
+        pnlControls.add(btnExportRevenueReport);
         pnlTopArea.add(pnlControls, BorderLayout.WEST);
 
         pnlTopArea.add(createBackButtonPanel(), BorderLayout.EAST); 
@@ -360,11 +412,20 @@ public class QuanLyDoanhThuVaThongKe extends javax.swing.JFrame {
         btnViewIncomeExpense.setFont(FONT_BUTTON);
         btnViewIncomeExpense.addActionListener(this::viewIncomeExpenseAction);
 
+        // Thêm nút xuất báo cáo thu chi
+        btnExportIncomeExpenseReport = new JButton("Xuất Báo Cáo");
+        btnExportIncomeExpenseReport.setFont(FONT_BUTTON);
+        btnExportIncomeExpenseReport.setBackground(COLOR_EXPORT_BUTTON);
+        btnExportIncomeExpenseReport.setForeground(Color.WHITE);
+        btnExportIncomeExpenseReport.setFocusPainted(false);
+        btnExportIncomeExpenseReport.addActionListener(this::exportIncomeExpenseReportAction);
+
         pnlControls.add(new JLabel("Từ ngày:"));
         pnlControls.add(dcStartDateIncomeExpense);
         pnlControls.add(new JLabel("Đến ngày:"));
         pnlControls.add(dcEndDateIncomeExpense);
         pnlControls.add(btnViewIncomeExpense);
+        pnlControls.add(btnExportIncomeExpenseReport);
         pnlTopArea.add(pnlControls, BorderLayout.WEST);
 
         pnlTopArea.add(createBackButtonPanel(), BorderLayout.EAST); 
@@ -434,82 +495,97 @@ public class QuanLyDoanhThuVaThongKe extends javax.swing.JFrame {
         return tabScrollPane;
     }
 
+    // === 2) Xây dựng panel Tra cứu Hóa Đơn ===
     private JScrollPane createInvoiceLookupPanel() {
-        JPanel mainTabContentPanel = new JPanel(new BorderLayout(10, 10));
-        mainTabContentPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
-        mainTabContentPanel.setBackground(COLOR_BACKGROUND);
+        JPanel main = new JPanel(new BorderLayout(10,10));
+        main.setBorder(new EmptyBorder(10,10,10,10));
+        main.setBackground(Color.WHITE);
 
-        JPanel pnlTopArea = new JPanel(new BorderLayout());
-        pnlTopArea.setBackground(COLOR_BACKGROUND);
-
-        JPanel pnlControls = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
-        pnlControls.setBackground(COLOR_BACKGROUND);
-        txtSearchInvoice = new JTextField(18);
-        txtSearchInvoice.setFont(FONT_TEXT_FIELD);
-        dcStartDateInvoice = createJDateChooser();
-        dcEndDateInvoice = createJDateChooser();
-        JButton btnSearchInvoice = new JButton("Tìm Hóa Đơn");
-        btnSearchInvoice.setFont(FONT_BUTTON);
-        btnSearchInvoice.addActionListener(this::searchInvoicesAction); // Action listener uses the modified method
-
-        pnlControls.add(new JLabel("Tìm (Mã HĐ/KH, Tên KH):"));
+        // --- Top controls ---
+        JPanel pnlControls = new JPanel(new FlowLayout(FlowLayout.LEFT, 8,5));
+        pnlControls.setBackground(Color.WHITE);
+        pnlControls.add(new JLabel("Tìm (Mã HĐ / Tên KH):"));
+        txtSearchInvoice = new JTextField(16);
         pnlControls.add(txtSearchInvoice);
+
         pnlControls.add(new JLabel("Từ ngày:"));
+        dcStartDateInvoice = new JDateChooser();
         pnlControls.add(dcStartDateInvoice);
+
         pnlControls.add(new JLabel("Đến ngày:"));
+        dcEndDateInvoice = new JDateChooser();
         pnlControls.add(dcEndDateInvoice);
+
+        btnSearchInvoice = new JButton("Tìm Hóa Đơn");
+        btnSearchInvoice.setFont(new Font("Tahoma",Font.PLAIN,14));
+        btnSearchInvoice.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String kw = txtSearchInvoice.getText().trim();
+                Date   s  = dcStartDateInvoice.getDate();
+                Date   t  = dcEndDateInvoice.getDate();
+                try {
+                    performInvoiceSearch(kw,s,t);
+                } catch (ClassNotFoundException ex) {
+                    Logger.getLogger(QuanLyDoanhThuVaThongKe.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+        });
         pnlControls.add(btnSearchInvoice);
-        pnlTopArea.add(pnlControls, BorderLayout.WEST);
 
-        pnlTopArea.add(createBackButtonPanel(), BorderLayout.EAST); 
-        mainTabContentPanel.add(pnlTopArea, BorderLayout.NORTH);
+        main.add(pnlControls, BorderLayout.NORTH);
 
-        modelInvoices = new DefaultTableModel(new String[]{"Mã HĐ", "Mã KH", "Tên KH", "Ngày Lập", "Tổng Tiền (VND)", "Trạng Thái"}, 0){
-            @Override public boolean isCellEditable(int row, int column) { return false; }
+        // --- Bảng danh sách hóa đơn ---
+        modelInvoices = new DefaultTableModel(
+            new String[]{"Mã HĐ","Mã KH","Tên KH","Ngày Lập","Tổng Tiền","Trạng Thái"},0
+        ) {
+            @Override public boolean isCellEditable(int r,int c){ return false; }
         };
         tblInvoices = new JTable(modelInvoices);
-        styleTable(tblInvoices);
-        tblInvoices.getSelectionModel().addListSelectionListener(e -> {
-            if (!e.getValueIsAdjusting() && tblInvoices.getSelectedRow() != -1) {
-                String maHoaDon = modelInvoices.getValueAt(tblInvoices.getSelectedRow(), 0).toString();
-                loadInvoiceDetails(maHoaDon);
+        tblInvoices.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        tblInvoices.getSelectionModel().addListSelectionListener((ListSelectionEvent ev)->{
+            if (!ev.getValueIsAdjusting() && tblInvoices.getSelectedRow()>=0) {
+                String maHD = modelInvoices.getValueAt(tblInvoices.getSelectedRow(),0).toString();
+                try {
+                    loadInvoiceDetails(maHD);
+                } catch (ClassNotFoundException ex) {
+                    Logger.getLogger(QuanLyDoanhThuVaThongKe.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+        });
+        // Thêm mouse click backup
+        tblInvoices.addMouseListener(new MouseAdapter(){
+            public void mouseClicked(MouseEvent e){
+                int row = tblInvoices.rowAtPoint(e.getPoint());
+                if(row>=0) {
+                    String maHD = modelInvoices.getValueAt(row,0).toString();
+                    try {
+                        loadInvoiceDetails(maHD);
+                    } catch (ClassNotFoundException ex) {
+                        Logger.getLogger(QuanLyDoanhThuVaThongKe.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                }
             }
         });
 
-        modelInvoiceDetails = new DefaultTableModel(new String[]{"Mã DV", "Tên Dịch Vụ", "Đơn Giá", "Số Lượng", "Thành Tiền"}, 0){
-            @Override public boolean isCellEditable(int row, int column) { return false; }
+        // --- Bảng chi tiết ---
+        modelInvoiceDetails = new DefaultTableModel(
+            new String[]{"Mã CTHĐ","Mã Vé","Mã DV","Tên DV/Vé","Đơn Giá","Số Lượng","Thành Tiền"},0
+        ) {
+            @Override public boolean isCellEditable(int r,int c){ return false; }
         };
         tblInvoiceDetails = new JTable(modelInvoiceDetails);
-        styleTable(tblInvoiceDetails);
-        JPanel pnlDetails = new JPanel(new BorderLayout());
-        pnlDetails.setBorder(BorderFactory.createTitledBorder("Chi Tiết Hóa Đơn"));
-        pnlDetails.add(new JScrollPane(tblInvoiceDetails), BorderLayout.CENTER);
 
-        JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, new JScrollPane(tblInvoices), pnlDetails);
-        splitPane.setResizeWeight(0.55);
-        splitPane.setOneTouchExpandable(true);
+        JSplitPane split = new JSplitPane(
+            JSplitPane.VERTICAL_SPLIT,
+            new JScrollPane(tblInvoices),
+            new JScrollPane(tblInvoiceDetails)
+        );
+        split.setResizeWeight(0.6);
+        split.setOneTouchExpandable(true);
 
-        mainTabContentPanel.add(splitPane, BorderLayout.CENTER);
-
-        // Perform initial load of invoices after UI is ready and initial dates are set
-        SwingUtilities.invokeLater(() -> {
-            Date initialStartDate = dcStartDateInvoice.getDate();
-            Date initialEndDate = dcEndDateInvoice.getDate();
-            if (initialStartDate != null && initialEndDate != null) {
-                performInvoiceSearch("", initialStartDate, initialEndDate); // Pass empty search term
-            } else {
-                // This case should ideally not be hit if setInitialDates() has run correctly
-                // after JDateChooser components are instantiated.
-                 System.err.println("Initial dates for invoice lookup not set. Skipping initial load.");
-                 // Optionally, inform user:
-                 // JOptionPane.showMessageDialog(this, "Không thể tải hóa đơn ban đầu: ngày chưa được thiết lập.", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
-            }
-        });
-
-        JScrollPane tabScrollPane = new JScrollPane(mainTabContentPanel);
-        tabScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-        tabScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-        return tabScrollPane;
+        main.add(split, BorderLayout.CENTER);
+        return new JScrollPane(main);
     }
 
     private void styleTable(JTable table) {
@@ -541,7 +617,6 @@ public class QuanLyDoanhThuVaThongKe extends javax.swing.JFrame {
         endCal.set(Calendar.SECOND, 59);
         endCal.set(Calendar.MILLISECOND, 999);
         Timestamp endOfDayTimestamp = new Timestamp(endCal.getTimeInMillis());
-
 
         modelRevenue.setRowCount(0);
         BigDecimal totalRevenueValue = BigDecimal.ZERO;
@@ -601,7 +676,6 @@ public class QuanLyDoanhThuVaThongKe extends javax.swing.JFrame {
                  JOptionPane.showMessageDialog(this, "Không có dữ liệu doanh thu trong khoảng đã chọn.", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
             }
 
-
             String chartTitle = "Biểu đồ Doanh Thu";
             if (startDate != null && endDate != null) {
                 chartTitle = "Biểu đồ Doanh Thu: " + queryDateFormat.format(startDate) + " - " + queryDateFormat.format(endDate);
@@ -609,13 +683,11 @@ public class QuanLyDoanhThuVaThongKe extends javax.swing.JFrame {
             JFreeChart chart = createBarChart(revenueDataset, chartTitle , "Ngày", "Số Tiền", true);
             chartPanelRevenue.setChart(chart);
 
-
             int numberOfCategories = revenueDataset.getColumnCount();
             int newChartWidth = Math.max(1100, numberOfCategories * 70);
             chartPanelRevenue.setPreferredSize(new Dimension(newChartWidth, chartPanelRevenue.getPreferredSize().height));
             chartPanelRevenue.revalidate();
             chartPanelRevenue.repaint();
-
 
         } catch (SQLException | ClassNotFoundException ex) {
             JOptionPane.showMessageDialog(this, "Lỗi CSDL (Doanh thu): " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
@@ -643,7 +715,6 @@ public class QuanLyDoanhThuVaThongKe extends javax.swing.JFrame {
 
         java.sql.Date sqlStartDate = new java.sql.Date(startDateVal.getTime());
         java.sql.Date sqlEndDate = new java.sql.Date(endCal.getTimeInMillis());
-
 
         modelIncome.setRowCount(0);
         modelExpense.setRowCount(0);
@@ -720,7 +791,6 @@ public class QuanLyDoanhThuVaThongKe extends javax.swing.JFrame {
                 JOptionPane.showMessageDialog(this, "Không có dữ liệu thu chi trong khoảng đã chọn.", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
             }
 
-
             String chartTitle = "Biểu đồ Thu Chi";
             if (startDateVal != null && endDateVal != null) {
                 chartTitle = "Biểu đồ Thu Chi: " + queryDateFormat.format(startDateVal) + " - " + queryDateFormat.format(endDateVal);
@@ -740,112 +810,631 @@ public class QuanLyDoanhThuVaThongKe extends javax.swing.JFrame {
         }
     }
 
-    // MODIFIED: Action listener now calls the refactored method
-    private void searchInvoicesAction(ActionEvent e) {
-        String searchTerm = txtSearchInvoice.getText().trim();
-        Date startDate = dcStartDateInvoice.getDate();
-        Date endDate = dcEndDateInvoice.getDate();
-        performInvoiceSearch(searchTerm, startDate, endDate);
-    }
+    // ==== 4) Sự kiện nút tìm kiếm ====
+private void searchInvoicesAction(ActionEvent e) throws ClassNotFoundException {
+    String searchTerm = txtSearchInvoice.getText().trim();
+    Date   startDate  = dcStartDateInvoice.getDate();
+    Date   endDate    = dcEndDateInvoice.getDate();
+    performInvoiceSearch(searchTerm, startDate, endDate);
+}
 
-    // NEW METHOD: Core logic for fetching and displaying invoices
-    private void performInvoiceSearch(String searchTerm, Date startDate, Date endDate) {
-        if (startDate == null || endDate == null) {
-            JOptionPane.showMessageDialog(this, "Vui lòng chọn ngày bắt đầu và ngày kết thúc cho hóa đơn.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+    // === 3) Tải danh sách hóa đơn, đồng thời tự tính LẠI tổng tiền từ chi tiết nếu HOADON.TONGTIEN = 0 ===
+    private void performInvoiceSearch(String searchTerm, Date startDate, Date endDate) throws ClassNotFoundException {
+        if (startDate==null || endDate==null) {
+            JOptionPane.showMessageDialog(this,
+                "Chọn đủ khoảng thời gian.","Lỗi",JOptionPane.ERROR_MESSAGE);
             return;
         }
         if (endDate.before(startDate)) {
-            JOptionPane.showMessageDialog(this, "Ngày kết thúc không được trước ngày bắt đầu.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this,
+                "Ngày kết thúc trước ngày bắt đầu.","Lỗi",JOptionPane.ERROR_MESSAGE);
             return;
         }
 
-        Timestamp startTimestamp = new Timestamp(startDate.getTime());
-        Calendar endCal = Calendar.getInstance();
-        endCal.setTime(endDate);
-        endCal.set(Calendar.HOUR_OF_DAY, 23);
-        endCal.set(Calendar.MINUTE, 59);
-        endCal.set(Calendar.SECOND, 59);
-        endCal.set(Calendar.MILLISECOND, 999);
-        Timestamp endOfDayTimestamp = new Timestamp(endCal.getTimeInMillis());
+        // chuẩn hóa đến 23:59:59 của endDate
+        Calendar c = Calendar.getInstance();
+        c.setTime(endDate);
+        c.set(Calendar.HOUR_OF_DAY,23);
+        c.set(Calendar.MINUTE,59);
+        c.set(Calendar.SECOND,59);
+        c.set(Calendar.MILLISECOND,999);
+        Timestamp tsStart = new Timestamp(startDate.getTime());
+        Timestamp tsEnd   = new Timestamp(c.getTimeInMillis());
 
         modelInvoices.setRowCount(0);
-        modelInvoiceDetails.setRowCount(0); // Clear details table as well
+        modelInvoiceDetails.setRowCount(0);
 
-        StringBuilder sqlBuilder = new StringBuilder(
-            "SELECT H.MAHOADON, H.MAKH, K.TENKH, H.NGAYLAP, H.TONGTIEN, H.TRANGTHAI " +
-            "FROM HOADON H " +
-            "LEFT JOIN KHACHHANG K ON H.MAKH = K.MAKH " +
-            "WHERE (H.NGAYLAP BETWEEN ? AND ?) "
-        );
-
-        if (searchTerm != null && !searchTerm.isEmpty()) {
-            sqlBuilder.append("AND (UPPER(H.MAHOADON) LIKE UPPER(?) OR UPPER(H.MAKH) LIKE UPPER(?) OR (K.TENKH IS NOT NULL AND UPPER(K.TENKH) LIKE UPPER(?))) ");
+        StringBuilder sql = new StringBuilder()
+            .append("SELECT H.MAHOADON,H.MAKH,K.TENKH,H.NGAYLAP, ")
+            // lấy luôn HOADON.TONGTIEN gốc
+            .append(" NVL(H.TONGTIEN,0) AS TONG_HOADON, H.TRANGTHAI ")
+            .append("FROM HOADON H ")
+            .append("LEFT JOIN KHACHHANG K ON H.MAKH=K.MAKH ")
+            .append("WHERE H.LOAIHOADON IN('VE_XE','VE_BAO_DUONG') ")
+            .append("  AND H.NGAYLAP BETWEEN ? AND ? ");
+        if (!searchTerm.isEmpty()) {
+            sql.append(" AND (UPPER(H.MAHOADON) LIKE UPPER(?)")
+               .append(" OR UPPER(K.TENKH) LIKE UPPER(?))");
         }
-        sqlBuilder.append("ORDER BY H.NGAYLAP DESC");
+        sql.append(" ORDER BY H.NGAYLAP DESC");
 
-        try (Connection conn = ConnectionOracle.getOracleConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sqlBuilder.toString())) {
-
-            int paramIndex = 1;
-            pstmt.setTimestamp(paramIndex++, startTimestamp);
-            pstmt.setTimestamp(paramIndex++, endOfDayTimestamp);
-
-            if (searchTerm != null && !searchTerm.isEmpty()) {
-                String likeTerm = "%" + searchTerm.toUpperCase() + "%";
-                pstmt.setString(paramIndex++, likeTerm);
-                pstmt.setString(paramIndex++, likeTerm);
-                pstmt.setString(paramIndex++, likeTerm);
+        try (
+            Connection conn = ConnectionOracle.getOracleConnection();
+            PreparedStatement p = conn.prepareStatement(sql.toString())
+        ) {
+            int idx=1;
+            p.setTimestamp(idx++, tsStart);
+            p.setTimestamp(idx++, tsEnd);
+            if (!searchTerm.isEmpty()) {
+                String kw = "%"+searchTerm+"%";
+                p.setString(idx++, kw);
+                p.setString(idx++, kw);
             }
+            ResultSet rs = p.executeQuery();
+            SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            DecimalFormat fmt   = new DecimalFormat("#,###");
 
-            ResultSet rs = pstmt.executeQuery();
-            boolean foundInvoices = false;
-            while (rs.next()) {
-                foundInvoices = true;
-                Vector<Object> row = new Vector<>();
-                row.add(rs.getString("MAHOADON"));
-                row.add(rs.getString("MAKH"));
-                row.add(rs.getString("TENKH"));
-                row.add(displayDateFormat.format(rs.getTimestamp("NGAYLAP")));
-                row.add(currencyFormat.format(rs.getBigDecimal("TONGTIEN")));
-                row.add(rs.getString("TRANGTHAI"));
-                modelInvoices.addRow(row);
+            while(rs.next()) {
+                String maHD     = rs.getString("MAHOADON");
+                BigDecimal tong = rs.getBigDecimal("TONG_HOADON");
+                // nếu HOADON.TONGTIEN == 0 thì tính lại bằng subtotal của CHITIETHOADON
+                if (tong.compareTo(BigDecimal.ZERO)==0) {
+                    tong = recalcTotalFromDetails(conn, maHD);
+                }
+                modelInvoices.addRow(new Object[]{
+                    maHD,
+                    rs.getString("MAKH"),
+                    rs.getString("TENKH"),
+                    df.format(rs.getTimestamp("NGAYLAP")),
+                    fmt.format(tong),
+                    rs.getString("TRANGTHAI")
+                });
             }
-            if (!foundInvoices) {
-                // This message will show if no invoices match, even on initial load with default dates.
-                JOptionPane.showMessageDialog(this, "Không tìm thấy hóa đơn nào khớp với tiêu chí.", "Thông Báo", JOptionPane.INFORMATION_MESSAGE);
+            // tự chọn dòng đầu và nạp chi tiết
+            if (modelInvoices.getRowCount()>0) {
+                tblInvoices.setRowSelectionInterval(0,0);
+                loadInvoiceDetails(modelInvoices.getValueAt(0,0).toString());
             }
-
-        } catch (SQLException | ClassNotFoundException ex) {
-            JOptionPane.showMessageDialog(this, "Lỗi kết nối hoặc truy vấn CSDL: " + ex.getMessage(), "Lỗi CSDL", JOptionPane.ERROR_MESSAGE);
+        } catch(SQLException ex){
             ex.printStackTrace();
+            JOptionPane.showMessageDialog(this,
+                "Lỗi tải hóa đơn:\n"+ex.getMessage(),
+                "Lỗi",JOptionPane.ERROR_MESSAGE);
+        }
+    }
+    
+    // helper: tính lại tổng từ CHITIETHOADON
+    private BigDecimal recalcTotalFromDetails(Connection conn, String maHD) throws SQLException {
+        String sql =
+          "SELECT SUM(CASE WHEN CT.MADVBAODUONG IS NOT NULL THEN DVB.GIA*CT.SOLUONG ELSE VX.PHIGUIXE*CT.SOLUONG END) AS SUBTOTAL " +
+          "FROM CHITIETHOADON CT " +
+          "LEFT JOIN DICHVUBAODUONG DVB ON CT.MADVBAODUONG=DVB.MADVBAODUONG " +
+          "LEFT JOIN VEGUIXE VX ON CT.MAVEXE=VX.MAVEXE " +
+          "WHERE CT.MAHOADON = ?";
+        try (PreparedStatement p = conn.prepareStatement(sql)) {
+            p.setString(1, maHD);
+            ResultSet r = p.executeQuery();
+            if (r.next()) {
+                return r.getBigDecimal("SUBTOTAL")==null
+                   ? BigDecimal.ZERO
+                   : r.getBigDecimal("SUBTOTAL");
+            }
+        }
+        return BigDecimal.ZERO;
+    }
+
+    // === 4) Tải chi tiết khi user click hoặc chọn row ===
+    private void loadInvoiceDetails(String maHoaDon) throws ClassNotFoundException {
+        modelInvoiceDetails.setRowCount(0);
+
+        String sql =
+          "SELECT CT.MACTHD, CT.MAVEXE, CT.MADVBAODUONG, DVB.TENDV, DVB.GIA AS GIA_DV, " +
+          "       VX.PHIGUIXE AS GIA_VE, CT.SOLUONG, " +
+          "       CASE WHEN CT.MADVBAODUONG IS NOT NULL THEN DVB.GIA*CT.SOLUONG " +
+          "            ELSE VX.PHIGUIXE*CT.SOLUONG END AS THANHTIEN " +
+          "FROM CHITIETHOADON CT " +
+          "LEFT JOIN DICHVUBAODUONG DVB ON CT.MADVBAODUONG=DVB.MADVBAODUONG " +
+          "LEFT JOIN VEGUIXE VX ON CT.MAVEXE=VX.MAVEXE " +
+          "WHERE CT.MAHOADON = ?";
+        try (
+            Connection conn = ConnectionOracle.getOracleConnection();
+            PreparedStatement p = conn.prepareStatement(sql)
+        ) {
+            p.setString(1, maHoaDon);
+            ResultSet rs = p.executeQuery();
+            DecimalFormat fmt = new DecimalFormat("#,###");
+            while(rs.next()) {
+                String mav    = rs.getString("MAVEXE");
+                String madv   = rs.getString("MADVBAODUONG");
+                String name   = rs.getString("TENDV");
+                BigDecimal ug = rs.getBigDecimal("GIA_DV");
+                if (ug==null) ug = rs.getBigDecimal("GIA_VE");
+                modelInvoiceDetails.addRow(new Object[]{
+                    rs.getString("MACTHD"),
+                    mav==null?"":mav,
+                    madv==null?"":madv,
+                    name==null?"Phí gửi xe":name,
+                    fmt.format(ug),
+                    rs.getInt("SOLUONG"),
+                    fmt.format(rs.getBigDecimal("THANHTIEN"))
+                });
+            }
+        } catch(SQLException ex){
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(this,
+                "Lỗi tải chi tiết hóa đơn:\n"+ex.getMessage(),
+                "Lỗi",JOptionPane.ERROR_MESSAGE);
         }
     }
 
 
-    private void loadInvoiceDetails(String maHoaDon) {
-        modelInvoiceDetails.setRowCount(0);
-        String sql = "SELECT CT.MADVBAODUONG, DVB.TENDV, DVB.GIA, CT.SOLUONG, (DVB.GIA * CT.SOLUONG) AS THANHTIEN " +
-                     "FROM CHITIETHOADON CT " +
-                     "JOIN DICHVUBAODUONG DVB ON CT.MADVBAODUONG = DVB.MADVBAODUONG " +
-                     "WHERE CT.MAHOADON = ?";
+    // Phương thức xuất báo cáo doanh thu
+    private void exportRevenueReportAction(ActionEvent e) {
+        Date startDate = dcStartDateRevenue.getDate();
+        Date endDate = dcEndDateRevenue.getDate();
 
-        try (Connection conn = ConnectionOracle.getOracleConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, maHoaDon);
-            ResultSet rs = pstmt.executeQuery();
-            while (rs.next()) {
-                Vector<Object> row = new Vector<>();
-                row.add(rs.getString("MADVBAODUONG"));
-                row.add(rs.getString("TENDV"));
-                row.add(currencyFormat.format(rs.getBigDecimal("GIA")));
-                row.add(rs.getInt("SOLUONG"));
-                row.add(currencyFormat.format(rs.getBigDecimal("THANHTIEN")));
-                modelInvoiceDetails.addRow(row);
-            }
-        } catch (SQLException | ClassNotFoundException ex) {
-            JOptionPane.showMessageDialog(this, "Lỗi tải chi tiết hóa đơn: " + ex.getMessage(), "Lỗi CSDL", JOptionPane.ERROR_MESSAGE);
-            ex.printStackTrace();
+        if (startDate == null || endDate == null || endDate.before(startDate)) {
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn khoảng thời gian hợp lệ để xuất báo cáo.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            return;
         }
+
+        if (modelRevenue.getRowCount() == 0) {
+            JOptionPane.showMessageDialog(this, "Không có dữ liệu doanh thu để xuất báo cáo.\nVui lòng nhấn 'Xem Doanh Thu' trước.", "Thông báo", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Chọn nơi lưu báo cáo doanh thu");
+        String defaultFileName = "ThongKeDoanhThu_" + fileNameDateFormat.format(startDate) + "_" + fileNameDateFormat.format(endDate) + ".pdf";
+        fileChooser.setSelectedFile(new File(defaultFileName));
+        FileNameExtensionFilter filter = new FileNameExtensionFilter("PDF Documents (*.pdf)", "pdf");
+        fileChooser.setFileFilter(filter);
+
+        int userSelection = fileChooser.showSaveDialog(this);
+        if (userSelection == JFileChooser.APPROVE_OPTION) {
+            File fileToSave = fileChooser.getSelectedFile();
+            String filePath = fileToSave.getAbsolutePath();
+            if (!filePath.toLowerCase().endsWith(".pdf")) {
+                filePath += ".pdf";
+            }
+
+            try {
+                generateRevenueReportPDF(filePath, startDate, endDate);
+                JOptionPane.showMessageDialog(this,
+                    "Báo cáo doanh thu đã được xuất thành công!\nĐường dẫn: " + filePath,
+                    "Xuất Báo Cáo Thành Công",
+                    JOptionPane.INFORMATION_MESSAGE);
+            } catch (IOException ex) {
+                JOptionPane.showMessageDialog(this,
+                    "Có lỗi xảy ra khi tạo báo cáo: " + ex.getMessage(),
+                    "Lỗi Xuất Báo Cáo",
+                    JOptionPane.ERROR_MESSAGE);
+                ex.printStackTrace();
+            }
+        }
+    }
+
+    // Phương thức xuất báo cáo thu chi
+    private void exportIncomeExpenseReportAction(ActionEvent e) {
+        Date startDate = dcStartDateIncomeExpense.getDate();
+        Date endDate = dcEndDateIncomeExpense.getDate();
+
+        if (startDate == null || endDate == null || endDate.before(startDate)) {
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn khoảng thời gian hợp lệ để xuất báo cáo.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        if (modelIncome.getRowCount() == 0 && modelExpense.getRowCount() == 0) {
+            JOptionPane.showMessageDialog(this, "Không có dữ liệu thu chi để xuất báo cáo.\nVui lòng nhấn 'Xem Thu Chi' trước.", "Thông báo", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Chọn nơi lưu báo cáo thu chi");
+        String defaultFileName = "ThongKeThuChi_" + fileNameDateFormat.format(startDate) + "_" + fileNameDateFormat.format(endDate) + ".pdf";
+        fileChooser.setSelectedFile(new File(defaultFileName));
+        FileNameExtensionFilter filter = new FileNameExtensionFilter("PDF Documents (*.pdf)", "pdf");
+        fileChooser.setFileFilter(filter);
+
+        int userSelection = fileChooser.showSaveDialog(this);
+        if (userSelection == JFileChooser.APPROVE_OPTION) {
+            File fileToSave = fileChooser.getSelectedFile();
+            String filePath = fileToSave.getAbsolutePath();
+
+            // Đảm bảo tệp có đuôi .pdf
+            if (!filePath.toLowerCase().endsWith(".pdf")) {
+                filePath += ".pdf";
+            }
+
+            try {
+                generateIncomeExpenseReportPDF(filePath, startDate, endDate);
+                JOptionPane.showMessageDialog(this,
+                    "Báo cáo thu chi đã được xuất thành công!\nĐường dẫn: " + filePath,
+                    "Xuất Báo Cáo Thành Công",
+                    JOptionPane.INFORMATION_MESSAGE);
+            } catch (IOException ex) {
+                JOptionPane.showMessageDialog(this,
+                    "Có lỗi xảy ra khi tạo báo cáo: " + ex.getMessage(),
+                    "Lỗi Xuất Báo Cáo",
+                    JOptionPane.ERROR_MESSAGE);
+                ex.printStackTrace();
+            }
+        }
+    }
+
+    // Phương thức tạo PDF báo cáo doanh thu - ĐÃ XÓA PHẦN CHỮ KÝ
+    private void generateRevenueReportPDF(String filePath, Date startDate, Date endDate) throws IOException {
+        PDFont localFontRegular = null;
+        PDFont localFontBold = null;
+
+        try (PDDocument document = new PDDocument();
+             InputStream fontStreamReg = getClass().getResourceAsStream("/fonts/arial.ttf");
+             InputStream fontStreamBld = getClass().getResourceAsStream("/fonts/arialbd.ttf")) {
+
+            if (fontStreamReg != null) {
+                localFontRegular = PDType0Font.load(document, fontStreamReg);
+            } else {
+                throw new IOException("Không tìm thấy file font regular: /fonts/arial.ttf");
+            }
+
+            if (fontStreamBld != null) {
+                localFontBold = PDType0Font.load(document, fontStreamBld);
+            } else {
+                System.err.println("Không tìm thấy file font bold: /fonts/arialbd.ttf. Sử dụng font regular cho bold.");
+                localFontBold = localFontRegular;
+            }
+
+            PDPage page = new PDPage(PDRectangle.A4);
+            document.addPage(page);
+
+            float margin = 40;
+            float yStart = page.getMediaBox().getHeight() - margin;
+            float yPosition = yStart;
+            float pageWidth = page.getMediaBox().getWidth();
+            float contentWidth = pageWidth - 2 * margin;
+
+            try (PDPageContentStream contentStream = new PDPageContentStream(document, page)) {
+                // Thêm logo nếu có
+                try {
+                    URL logoUrl = getClass().getResource("/icons/logoF4ThuDuc.jpg");
+                    if (logoUrl != null) {
+                        PDImageXObject logoImage = PDImageXObject.createFromByteArray(document, 
+                            logoUrl.openStream().readAllBytes(), "logo");
+                        float logoWidth = 80;
+                        float logoHeight = 60;
+                        contentStream.drawImage(logoImage, margin, yPosition - logoHeight, logoWidth, logoHeight);
+                        yPosition -= logoHeight + 10;
+                    }
+                } catch (Exception e) {
+                    System.err.println("Không thể tải logo: " + e.getMessage());
+                    yPosition -= 20; // Giảm khoảng cách nếu không có logo
+                }
+
+                // Header công ty
+                drawTextCentered(contentStream, "HỆ THỐNG QUẢN LÝ XE VÀ BẢO DƯỠNG XE", localFontBold, 16, yPosition, pageWidth);
+                yPosition -= 30;
+
+                // Ngày báo cáo
+                String currentDate = new SimpleDateFormat("EEEE dd MMMM yyyy", new java.util.Locale("vi", "VN")).format(new Date());
+                drawTextRight(contentStream, currentDate, localFontRegular, 11, pageWidth - margin, yPosition);
+                yPosition -= 40;
+
+                // Tiêu đề báo cáo
+                String reportTitle = "BÁO CÁO DOANH THU TỪ " + reportDateFormat.format(startDate) + " ĐẾN " + reportDateFormat.format(endDate);
+                drawTextCentered(contentStream, reportTitle, localFontBold, 16, yPosition, pageWidth);
+                yPosition -= 40;
+
+                // Bảng dữ liệu
+                String[] headers = {"STT", "NGUỒN DOANH THU", "NGÀY GHI NHẬN", "SỐ TIỀN"};
+                float[] colWidths = {contentWidth * 0.08f, contentWidth * 0.35f, contentWidth * 0.27f, contentWidth * 0.30f};
+                float tableRowHeight = 25f;
+
+                // Vẽ header bảng
+                yPosition -= tableRowHeight;
+                float currentX = margin;
+                for (int i = 0; i < headers.length; i++) {
+                    drawTableCell(contentStream, headers[i], localFontBold, 11f, currentX, yPosition, colWidths[i], tableRowHeight, "CENTER", true);
+                    currentX += colWidths[i];
+                }
+                drawTableBorder(contentStream, margin, yPosition, contentWidth, tableRowHeight);
+
+                // Vẽ dữ liệu
+                DefaultTableModel model = modelRevenue;
+                for (int i = 0; i < model.getRowCount(); i++) {
+                    yPosition -= tableRowHeight;
+                    currentX = margin;
+                    
+                    drawTableCell(contentStream, String.valueOf(i + 1), localFontRegular, 10f, currentX, yPosition, colWidths[0], tableRowHeight, "CENTER", false);
+                    currentX += colWidths[0];
+                    drawTableCell(contentStream, model.getValueAt(i, 0).toString(), localFontRegular, 10f, currentX, yPosition, colWidths[1], tableRowHeight, "CENTER", false);
+                    currentX += colWidths[1];
+                    drawTableCell(contentStream, model.getValueAt(i, 1).toString(), localFontRegular, 10f, currentX, yPosition, colWidths[2], tableRowHeight, "CENTER", false);
+                    currentX += colWidths[2];
+                    drawTableCell(contentStream, model.getValueAt(i, 2).toString(), localFontRegular, 10f, currentX, yPosition, colWidths[3], tableRowHeight, "CENTER", false);
+                    
+                    drawTableBorder(contentStream, margin, yPosition, contentWidth, tableRowHeight);
+                }
+
+                // Tổng doanh thu
+                yPosition -= 30;
+                String totalText = "TỔNG DOANH THU: " + lblTotalRevenue.getText().replace("Tổng Doanh Thu: ", "");
+                drawTextCentered(contentStream, totalText, localFontBold, 14, yPosition, pageWidth);
+                
+                // ĐÃ XÓA PHẦN CHỮ KÝ - KẾT THÚC TẠI ĐÂY
+            }
+
+            document.save(filePath);
+        }
+    }
+
+    // Phương thức tạo PDF báo cáo thu chi - ĐÃ XÓA PHẦN CHỮ KÝ
+    private void generateIncomeExpenseReportPDF(String filePath, Date startDate, Date endDate) throws IOException {
+        PDFont localFontRegular = null;
+        PDFont localFontBold = null;
+
+        try (PDDocument document = new PDDocument();
+             InputStream fontStreamReg = getClass().getResourceAsStream("/fonts/arial.ttf");
+             InputStream fontStreamBld = getClass().getResourceAsStream("/fonts/arialbd.ttf")) {
+
+            if (fontStreamReg != null) {
+                localFontRegular = PDType0Font.load(document, fontStreamReg);
+            } else {
+                throw new IOException("Không tìm thấy file font regular: /fonts/arial.ttf");
+            }
+
+            if (fontStreamBld != null) {
+                localFontBold = PDType0Font.load(document, fontStreamBld);
+            } else {
+                System.err.println("Không tìm thấy file font bold: /fonts/arialbd.ttf. Sử dụng font regular cho bold.");
+                localFontBold = localFontRegular;
+            }
+
+            PDPage page = new PDPage(PDRectangle.A4);
+            document.addPage(page);
+
+            float margin = 40;
+            float yStart = page.getMediaBox().getHeight() - margin;
+            float yPosition = yStart;
+            float pageWidth = page.getMediaBox().getWidth();
+            float contentWidth = pageWidth - 2 * margin;
+
+            try (PDPageContentStream contentStream = new PDPageContentStream(document, page)) {
+                // Thêm logo nếu có
+                try {
+                    URL logoUrl = getClass().getResource("/icons/logoF4ThuDuc.jpg");
+                    if (logoUrl != null) {
+                        PDImageXObject logoImage = PDImageXObject.createFromByteArray(document, 
+                            logoUrl.openStream().readAllBytes(), "logo");
+                        float logoWidth = 80;
+                        float logoHeight = 60;
+                        contentStream.drawImage(logoImage, margin, yPosition - logoHeight, logoWidth, logoHeight);
+                        yPosition -= logoHeight + 10;
+                    }
+                } catch (Exception e) {
+                    System.err.println("Không thể tải logo: " + e.getMessage());
+                    yPosition -= 20;
+                }
+
+                // Header công ty
+                drawTextCentered(contentStream, "HỆ THỐNG QUẢN LÝ XE VÀ BẢO DƯỠNG XE", localFontBold, 16, yPosition, pageWidth);
+                yPosition -= 30;
+
+                // Ngày báo cáo
+                String currentDate = new SimpleDateFormat("EEEE dd MMMM yyyy", new java.util.Locale("vi", "VN")).format(new Date());
+                drawTextRight(contentStream, currentDate, localFontRegular, 11, pageWidth - margin, yPosition);
+                yPosition -= 40;
+
+                // Tiêu đề báo cáo
+                String reportTitle = "BÁO CÁO THU CHI TỪ " + reportDateFormat.format(startDate) + " ĐẾN " + reportDateFormat.format(endDate);
+                drawTextCentered(contentStream, reportTitle, localFontBold, 16, yPosition, pageWidth);
+                yPosition -= 40;
+
+                // Tính toán layout cân bằng cho thu chi
+                int incomeRows = modelIncome.getRowCount();
+                int expenseRows = modelExpense.getRowCount();
+                
+                // Nếu có dữ liệu thu chi, hiển thị theo layout cải thiện
+                if (incomeRows > 0 || expenseRows > 0) {
+                    // Bảng khoản thu
+                    if (incomeRows > 0) {
+                        drawTextLeft(contentStream, "KHOẢN THU:", localFontBold, 12, margin, yPosition);
+                        yPosition -= 25;
+
+                        String[] incomeHeaders = {"STT", "NGÀY THU", "NGUỒN THU", "SỐ TIỀN"};
+                        float[] incomeColWidths = {contentWidth * 0.08f, contentWidth * 0.25f, contentWidth * 0.37f, contentWidth * 0.30f};
+                        float tableRowHeight = 20f;
+
+                        // Header bảng thu
+                        yPosition -= tableRowHeight;
+                        float currentX = margin;
+                        for (int i = 0; i < incomeHeaders.length; i++) {
+                            drawTableCell(contentStream, incomeHeaders[i], localFontBold, 10f, currentX, yPosition, incomeColWidths[i], tableRowHeight, "CENTER", true);
+                            currentX += incomeColWidths[i];
+                        }
+                        drawTableBorder(contentStream, margin, yPosition, contentWidth, tableRowHeight);
+
+                        // Dữ liệu thu - GIỚI HẠN SỐ DÒNG ĐỂ KHÔNG CHIẾM HẾT TRANG
+                        int maxIncomeRowsToShow = Math.min(incomeRows, 15); // Giới hạn tối đa 15 dòng
+                        for (int i = 0; i < maxIncomeRowsToShow; i++) {
+                            yPosition -= tableRowHeight;
+                            currentX = margin;
+                            
+                            drawTableCell(contentStream, String.valueOf(i + 1), localFontRegular, 9f, currentX, yPosition, incomeColWidths[0], tableRowHeight, "CENTER", false);
+                            currentX += incomeColWidths[0];
+                            drawTableCell(contentStream, modelIncome.getValueAt(i, 0).toString(), localFontRegular, 9f, currentX, yPosition, incomeColWidths[1], tableRowHeight, "CENTER", false);
+                            currentX += incomeColWidths[1];
+                            drawTableCell(contentStream, modelIncome.getValueAt(i, 1).toString(), localFontRegular, 9f, currentX, yPosition, incomeColWidths[2], tableRowHeight, "CENTER", false);
+                            currentX += incomeColWidths[2];
+                            drawTableCell(contentStream, modelIncome.getValueAt(i, 2).toString(), localFontRegular, 9f, currentX, yPosition, incomeColWidths[3], tableRowHeight, "CENTER", false);
+                            
+                            drawTableBorder(contentStream, margin, yPosition, contentWidth, tableRowHeight);
+                        }
+
+                        // Hiển thị thông báo nếu có nhiều dòng hơn
+                        if (incomeRows > maxIncomeRowsToShow) {
+                            yPosition -= 15;
+                            drawTextLeft(contentStream, "... và " + (incomeRows - maxIncomeRowsToShow) + " khoản thu khác", localFontRegular, 9f, margin, yPosition);
+                        }
+
+                        yPosition -= 20;
+                        drawTextRight(contentStream, lblTotalIncome.getText(), localFontBold, 11, pageWidth - margin, yPosition);
+                        yPosition -= 30;
+                    }
+
+                    // Bảng khoản chi
+                    if (expenseRows > 0) {
+                        drawTextLeft(contentStream, "KHOẢN CHI:", localFontBold, 12, margin, yPosition);
+                        yPosition -= 25;
+
+                        String[] expenseHeaders = {"STT", "NGÀY CHI", "LÝ DO CHI", "SỐ TIỀN"};
+                        float[] expenseColWidths = {contentWidth * 0.08f, contentWidth * 0.25f, contentWidth * 0.37f, contentWidth * 0.30f};
+                        float tableRowHeight = 20f;
+
+                        // Header bảng chi
+                        yPosition -= tableRowHeight;
+                        float currentX = margin;
+                        for (int i = 0; i < expenseHeaders.length; i++) {
+                            drawTableCell(contentStream, expenseHeaders[i], localFontBold, 10f, currentX, yPosition, expenseColWidths[i], tableRowHeight, "CENTER", true);
+                            currentX += expenseColWidths[i];
+                        }
+                        drawTableBorder(contentStream, margin, yPosition, contentWidth, tableRowHeight);
+
+                        // Dữ liệu chi - GIỚI HẠN SỐ DÒNG
+                        int maxExpenseRowsToShow = Math.min(expenseRows, 10); // Giới hạn tối đa 10 dòng cho chi
+                        for (int i = 0; i < maxExpenseRowsToShow; i++) {
+                            yPosition -= tableRowHeight;
+                            currentX = margin;
+                            
+                            drawTableCell(contentStream, String.valueOf(i + 1), localFontRegular, 9f, currentX, yPosition, expenseColWidths[0], tableRowHeight, "CENTER", false);
+                            currentX += expenseColWidths[0];
+                            drawTableCell(contentStream, modelExpense.getValueAt(i, 0).toString(), localFontRegular, 9f, currentX, yPosition, expenseColWidths[1], tableRowHeight, "CENTER", false);
+                            currentX += expenseColWidths[1];
+                            drawTableCell(contentStream, modelExpense.getValueAt(i, 1).toString(), localFontRegular, 9f, currentX, yPosition, expenseColWidths[2], tableRowHeight, "CENTER", false);
+                            currentX += expenseColWidths[2];
+                            drawTableCell(contentStream, modelExpense.getValueAt(i, 2).toString(), localFontRegular, 9f, currentX, yPosition, expenseColWidths[3], tableRowHeight, "CENTER", false);
+                            
+                            drawTableBorder(contentStream, margin, yPosition, contentWidth, tableRowHeight);
+                        }
+
+                        // Hiển thị thông báo nếu có nhiều dòng hơn
+                        if (expenseRows > maxExpenseRowsToShow) {
+                            yPosition -= 15;
+                            drawTextLeft(contentStream, "... và " + (expenseRows - maxExpenseRowsToShow) + " khoản chi khác", localFontRegular, 9f, margin, yPosition);
+                        }
+
+                        yPosition -= 20;
+                        drawTextRight(contentStream, lblTotalExpense.getText(), localFontBold, 11, pageWidth - margin, yPosition);
+                        yPosition -= 30;
+                    }
+                }
+
+                // Lợi nhuận
+                drawTextCentered(contentStream, lblNetProfit.getText(), localFontBold, 14, yPosition, pageWidth);
+                
+                // ĐÃ XÓA PHẦN CHỮ KÝ - KẾT THÚC TẠI ĐÂY
+            }
+
+            document.save(filePath);
+        }
+    }
+
+    // Helper methods for PDF generation
+    private void drawText(PDPageContentStream contentStream, String text, PDFont font, float fontSize, float x, float y) throws IOException {
+        if (font == null) {
+            System.err.println("drawText: Font is null. Text: " + text);
+            return;
+        }
+        contentStream.beginText();
+        contentStream.setFont(font, fontSize);
+        contentStream.newLineAtOffset(x, y);
+        contentStream.showText(text != null ? text : "");
+        contentStream.endText();
+    }
+
+    private void drawTextCentered(PDPageContentStream contentStream, String text, PDFont font, float fontSize, float y, float pageWidth) throws IOException {
+        if (font == null) {
+            System.err.println("drawTextCentered: Font is null. Text: " + text);
+            return;
+        }
+        text = text != null ? text : "";
+        float textWidth = font.getStringWidth(text) / 1000f * fontSize;
+        float x = (pageWidth - textWidth) / 2f;
+        drawText(contentStream, text, font, fontSize, x, y);
+    }
+
+    private void drawTextRight(PDPageContentStream contentStream, String text, PDFont font, float fontSize, float rightX, float y) throws IOException {
+        if (font == null) {
+            System.err.println("drawTextRight: Font is null. Text: " + text);
+            return;
+        }
+        text = text != null ? text : "";
+        float textWidth = font.getStringWidth(text) / 1000f * fontSize;
+        float x = rightX - textWidth;
+        drawText(contentStream, text, font, fontSize, x, y);
+    }
+
+    private void drawTextLeft(PDPageContentStream contentStream, String text, PDFont font, float fontSize, float x, float y) throws IOException {
+        drawText(contentStream, text, font, fontSize, x, y);
+    }
+
+    private void drawTableCell(PDPageContentStream contentStream, String text, PDFont font, float fontSize, float x, float y, float cellWidth, float cellHeight, String align, boolean isHeader) throws IOException {
+        if (font == null) {
+            System.err.println("drawTableCell: Font is null. Text: " + text);
+            return;
+        }
+        text = text != null ? text : "";
+        float textWidth = font.getStringWidth(text) / 1000f * fontSize;
+        float actualX = x;
+        float padding = 4f;
+
+        // Truncate text if too long
+        if (textWidth > cellWidth - 2 * padding) {
+            String originalText = text;
+            text = "";
+            for (int i = 0; i < originalText.length(); i++) {
+                String testText = originalText.substring(0, i + 1);
+                float tempWidth = font.getStringWidth(testText + "...") / 1000f * fontSize;
+                if (tempWidth < cellWidth - 2 * padding) {
+                    text = testText;
+                } else {
+                    break;
+                }
+            }
+            if (!text.equals(originalText) && !text.isEmpty()) {
+                text += "...";
+            }
+            textWidth = font.getStringWidth(text) / 1000f * fontSize;
+        }
+
+        // Align text - CẢI THIỆN CĂNG GIỮA CHÍNH XÁC
+        if ("CENTER".equalsIgnoreCase(align)) {
+            actualX = x + (cellWidth - textWidth) / 2f;
+        } else if ("RIGHT".equalsIgnoreCase(align)) {
+            actualX = x + cellWidth - textWidth - padding;
+        } else { // LEFT
+            actualX = x + padding;
+        }
+
+        // Đảm bảo text không bị tràn ra ngoài cell
+        if (actualX < x + padding) actualX = x + padding;
+        if (actualX + textWidth > x + cellWidth - padding) {
+            actualX = x + cellWidth - textWidth - padding;
+        }
+
+        float textY = y + (cellHeight - fontSize) / 2f - (fontSize * 0.15f);
+        if (isHeader) textY = y + (cellHeight - fontSize) / 2f - (fontSize * 0.05f);
+
+        contentStream.beginText();
+        contentStream.setFont(font, fontSize);
+        contentStream.newLineAtOffset(actualX, textY);
+        contentStream.showText(text);
+        contentStream.endText();
+    }
+
+    private void drawTableBorder(PDPageContentStream contentStream, float x, float y, float width, float height) throws IOException {
+        contentStream.setLineWidth(0.5f);
+        contentStream.addRect(x, y, width, height);
+        contentStream.stroke();
     }
 
     public static void main(String[] args) {
@@ -854,7 +1443,13 @@ public class QuanLyDoanhThuVaThongKe extends javax.swing.JFrame {
         } catch (UnsupportedLookAndFeelException ex) {
             System.err.println("Không thể khởi tạo LaF: " + ex.getMessage());
         }
-        SwingUtilities.invokeLater(() -> new QuanLyDoanhThuVaThongKe().setVisible(true));
+        SwingUtilities.invokeLater(() -> {
+            try {
+                new QuanLyDoanhThuVaThongKe().setVisible(true);
+            } catch (ClassNotFoundException ex) {
+                Logger.getLogger(QuanLyDoanhThuVaThongKe.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        });
     }
 
 

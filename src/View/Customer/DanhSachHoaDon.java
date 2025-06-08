@@ -121,161 +121,174 @@ public class DanhSachHoaDon extends javax.swing.JFrame {
     }
 
     private void initComponentsCustom() {
-        // --- Panel Tiêu đề ---
-        JPanel titlePanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        titlePanel.setBackground(FRAME_PRIMARY_COLOR);
-        titlePanel.setBorder(new EmptyBorder(15,0,15,0));
-        JLabel lblTitle = new JLabel("DANH SÁCH HÓA ĐƠN CỦA BẠN");
-        lblTitle.setFont(FONT_TITLE_FRAME);
-        lblTitle.setForeground(TEXT_COLOR_ON_PRIMARY);
-        titlePanel.add(lblTitle);
+    // --- Panel Tiêu đề ---
+    JPanel titlePanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+    titlePanel.setBackground(FRAME_PRIMARY_COLOR);
+    titlePanel.setBorder(new EmptyBorder(15,0,15,0));
+    JLabel lblTitle = new JLabel("DANH SÁCH HÓA ĐƠN CỦA BẠN");
+    lblTitle.setFont(FONT_TITLE_FRAME);
+    lblTitle.setForeground(TEXT_COLOR_ON_PRIMARY);
+    titlePanel.add(lblTitle);
 
-        // --- Panel chứa các nút actions và tìm kiếm ---
-        JPanel topActionsPanel = new JPanel(new BorderLayout(15, 10));
-        topActionsPanel.setBackground(APP_BACKGROUND);
-        topActionsPanel.setBorder(new EmptyBorder(15, 20, 10, 20));
+    // --- Panel chứa các nút actions và tìm kiếm ---
+    JPanel topActionsPanel = new JPanel(new BorderLayout(15, 10));
+    topActionsPanel.setBackground(APP_BACKGROUND);
+    topActionsPanel.setBorder(new EmptyBorder(15, 20, 10, 20));
 
-        JPanel searchFieldsAndButtonsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
-        searchFieldsAndButtonsPanel.setOpaque(false);
+    JPanel searchFieldsAndButtonsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+    searchFieldsAndButtonsPanel.setOpaque(false);
 
-        JLabel lblSearch = new JLabel("Tìm kiếm HĐ:");
-        lblSearch.setFont(FONT_LABEL.deriveFont(Font.BOLD));
-        lblSearch.setForeground(TEXT_COLOR_DARK);
-        txtSearch = new JTextField(25);
-        txtSearch.setFont(FONT_LABEL);
-        txtSearch.putClientProperty("JTextField.placeholderText", "Mã HĐ, Ngày lập...");
+    JLabel lblSearch = new JLabel("Tìm kiếm HĐ:");
+    lblSearch.setFont(FONT_LABEL.deriveFont(Font.BOLD));
+    lblSearch.setForeground(TEXT_COLOR_DARK);
+    txtSearch = new JTextField(25);
+    txtSearch.setFont(FONT_LABEL);
+    txtSearch.putClientProperty("JTextField.placeholderText", "Mã HĐ, Ngày lập...");
 
-        btnSearch = new JButton("Tìm");
-        styleButton(btnSearch, BUTTON_PRIMARY_COLOR, WHITE_COLOR);
-        btnSearch.setIcon(loadIcon("search.png", 16, 16));
-        btnSearch.addActionListener(e -> loadDanhSachHoaDonChoKhachHang(txtSearch.getText().trim()));
+    btnSearch = new JButton("Tìm");
+    styleButton(btnSearch, BUTTON_PRIMARY_COLOR, WHITE_COLOR);
+    btnSearch.setIcon(loadIcon("search.png", 16, 16));
+    btnSearch.addActionListener(e ->
+        loadDanhSachHoaDonChoKhachHang(txtSearch.getText().trim())
+    );
 
-        btnRefresh = new JButton("Làm Mới");
-        styleButton(btnRefresh, BUTTON_SECONDARY_COLOR, WHITE_COLOR);
-        btnRefresh.setIcon(loadIcon("refresh.png", 16, 16));
-        btnRefresh.addActionListener(e -> {
-            txtSearch.setText("");
-            loadDanhSachHoaDonChoKhachHang("");
-        });
-        
-        searchFieldsAndButtonsPanel.add(lblSearch);
-        searchFieldsAndButtonsPanel.add(txtSearch);
-        searchFieldsAndButtonsPanel.add(btnSearch);
-        searchFieldsAndButtonsPanel.add(btnRefresh);
+    btnRefresh = new JButton("Làm Mới");
+    styleButton(btnRefresh, BUTTON_SECONDARY_COLOR, WHITE_COLOR);
+    btnRefresh.setIcon(loadIcon("refresh.png", 16, 16));
+    btnRefresh.addActionListener(e -> {
+        txtSearch.setText("");
+        loadDanhSachHoaDonChoKhachHang("");
+    });
 
-        btnBack = new JButton("Trang Chủ");
-        styleButton(btnBack, BUTTON_SECONDARY_COLOR, WHITE_COLOR);
-        btnBack.setIcon(loadIcon("back_arrow.png", 16, 16));
-        btnBack.addActionListener(e -> {
-            if (ownerFrame != null) {
-                ownerFrame.showWelcomeScreen(); // Quay lại màn hình welcome của CustomerHomePage
-            }
-            this.dispose(); // Đóng frame hiện tại
-        });
-        
-        JPanel backButtonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0,0));
-        backButtonPanel.setOpaque(false);
-        backButtonPanel.add(btnBack);
+    searchFieldsAndButtonsPanel.add(lblSearch);
+    searchFieldsAndButtonsPanel.add(txtSearch);
+    searchFieldsAndButtonsPanel.add(btnSearch);
+    searchFieldsAndButtonsPanel.add(btnRefresh);
 
-        topActionsPanel.add(searchFieldsAndButtonsPanel, BorderLayout.WEST);
-        topActionsPanel.add(backButtonPanel, BorderLayout.EAST);
-
-        // --- Bảng hiển thị danh sách hóa đơn ---
-        String[] columnNames = {"STT", "Mã Hóa Đơn", "Ngày Lập", "Tổng Tiền", "Trạng Thái"};
-        hoaDonTableModel = new DefaultTableModel(columnNames, 0) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
-            }
-        };
-        tblHoaDon = new JTable(hoaDonTableModel);
-        tblHoaDon.setFont(FONT_TABLE_CELL);
-        tblHoaDon.setRowHeight(32);
-        tblHoaDon.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        tblHoaDon.setGridColor(BORDER_COLOR);
-        tblHoaDon.setShowGrid(true);
-        tblHoaDon.setIntercellSpacing(new Dimension(0,0));
-
-        JTableHeader tableHeader = tblHoaDon.getTableHeader();
-        tableHeader.setFont(FONT_TABLE_HEADER);
-        tableHeader.setBackground(TABLE_HEADER_BACKGROUND);
-        tableHeader.setForeground(TEXT_COLOR_DARK);
-        tableHeader.setReorderingAllowed(false);
-        tableHeader.setPreferredSize(new Dimension(tableHeader.getWidth(), 40));
-
-        TableColumnModel columnModel = tblHoaDon.getColumnModel();
-        columnModel.getColumn(0).setPreferredWidth(50);  // STT
-        columnModel.getColumn(1).setPreferredWidth(150); // Mã Hóa Đơn
-        columnModel.getColumn(2).setPreferredWidth(180); // Ngày Lập
-        columnModel.getColumn(3).setPreferredWidth(150); // Tổng Tiền
-        columnModel.getColumn(4).setPreferredWidth(180); // Trạng Thái
-        
-        DefaultTableCellRenderer leftPaddingRenderer = new DefaultTableCellRenderer();
-        leftPaddingRenderer.setHorizontalAlignment(SwingConstants.LEFT);
-        leftPaddingRenderer.setBorder(new EmptyBorder(0, 10, 0, 10));
-
-        for (int i = 0; i < tblHoaDon.getColumnCount(); i++) {
-            tblHoaDon.getColumnModel().getColumn(i).setCellRenderer(leftPaddingRenderer);
+    btnBack = new JButton("Trang Chủ");
+    styleButton(btnBack, BUTTON_SECONDARY_COLOR, WHITE_COLOR);
+    btnBack.setIcon(loadIcon("back_arrow.png", 16, 16));
+    btnBack.addActionListener(e -> {
+        if (ownerFrame != null) {
+            ownerFrame.showWelcomeScreen();
         }
-        DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
-        centerRenderer.setHorizontalAlignment(SwingConstants.CENTER);
-        centerRenderer.setBorder(new EmptyBorder(0, 10, 0, 10));
-        tblHoaDon.getColumnModel().getColumn(0).setCellRenderer(centerRenderer); // STT căn giữa
-        
-        DefaultTableCellRenderer rightPaddingRenderer = new DefaultTableCellRenderer();
-        rightPaddingRenderer.setHorizontalAlignment(SwingConstants.RIGHT);
-        rightPaddingRenderer.setBorder(new EmptyBorder(0, 10, 0, 10));
-        tblHoaDon.getColumnModel().getColumn(3).setCellRenderer(rightPaddingRenderer); // Tổng tiền căn phải
+        this.dispose();
+    });
+    JPanel backButtonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+    backButtonPanel.setOpaque(false);
+    backButtonPanel.add(btnBack);
 
-        JScrollPane scrollPane = new JScrollPane(tblHoaDon);
-        scrollPane.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(BORDER_COLOR),
-            new EmptyBorder(1,1,1,1)
-        ));
-        scrollPane.getViewport().setBackground(WHITE_COLOR);
-        
-        JPanel tableContainerPanel = new JPanel(new BorderLayout());
-        tableContainerPanel.setBackground(APP_BACKGROUND);
-        tableContainerPanel.setBorder(new EmptyBorder(0,20,20,20));
-        tableContainerPanel.add(scrollPane, BorderLayout.CENTER);
+    topActionsPanel.add(searchFieldsAndButtonsPanel, BorderLayout.WEST);
+    topActionsPanel.add(backButtonPanel, BorderLayout.EAST);
 
-        tblHoaDon.addMouseListener(new MouseAdapter() {
-            public void mouseClicked(MouseEvent evt) {
-                if (evt.getClickCount() == 2) {
-                    int selectedRow = tblHoaDon.getSelectedRow();
-                    if (selectedRow >= 0) {
-                        String maHoaDon = (String) hoaDonTableModel.getValueAt(selectedRow, 1);
-                        
-                        // Tạo và hiển thị frame ThanhToanHoaDon
-                        ThanhToanHoaDon chiTietHD = new ThanhToanHoaDon(maHoaDon, DanhSachHoaDon.this.ownerFrame);
-                        chiTietHD.setVisible(true);
-                        
-                        if(ownerFrame != null) ownerFrame.setEnabled(false); // Disable CustomerHomePage
-                        DanhSachHoaDon.this.setEnabled(false); // Disable frame hiện tại
+    // --- Bảng hiển thị danh sách hóa đơn ---
+    String[] columnNames = {
+        "STT",
+        "Mã Hóa Đơn",
+        "Loại Hóa Đơn",
+        "Ngày Lập",
+        "Tổng Tiền",
+        "Trạng Thái"
+    };
+    hoaDonTableModel = new DefaultTableModel(columnNames, 0) {
+        @Override
+        public boolean isCellEditable(int row, int column) {
+            return false;
+        }
+    };
 
-                        chiTietHD.addWindowListener(new WindowAdapter() {
-                             @Override
-                             public void windowClosed(WindowEvent e) {
-                                 if(ownerFrame != null) ownerFrame.setEnabled(true);
-                                 DanhSachHoaDon.this.setEnabled(true);
-                                 loadDanhSachHoaDonChoKhachHang(txtSearch.getText().trim()); // Tải lại danh sách
-                                 DanhSachHoaDon.this.requestFocus();
-                             }
-                        });
-                    }
+    tblHoaDon = new JTable(hoaDonTableModel);
+    tblHoaDon.setFont(FONT_TABLE_CELL);
+    tblHoaDon.setRowHeight(32);
+    tblHoaDon.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+    tblHoaDon.setGridColor(BORDER_COLOR);
+    tblHoaDon.setShowGrid(true);
+    tblHoaDon.setIntercellSpacing(new Dimension(0,0));
+
+    JTableHeader tableHeader = tblHoaDon.getTableHeader();
+    tableHeader.setFont(FONT_TABLE_HEADER);
+    tableHeader.setBackground(TABLE_HEADER_BACKGROUND);
+    tableHeader.setForeground(TEXT_COLOR_DARK);
+    tableHeader.setReorderingAllowed(false);
+    tableHeader.setPreferredSize(new Dimension(tableHeader.getWidth(), 40));
+
+    // --- Sửa lại độ rộng các cột ---
+    TableColumnModel columnModel = tblHoaDon.getColumnModel();
+    columnModel.getColumn(0).setPreferredWidth(50);   // STT
+    columnModel.getColumn(1).setPreferredWidth(150);  // Mã Hóa Đơn
+    columnModel.getColumn(2).setPreferredWidth(150);  // Loại Hóa Đơn
+    columnModel.getColumn(3).setPreferredWidth(180);  // Ngày Lập
+    columnModel.getColumn(4).setPreferredWidth(150);  // Tổng Tiền
+    columnModel.getColumn(5).setPreferredWidth(180);  // Trạng Thái
+
+    // --- Chuẩn bị các CellRenderer ---
+    DefaultTableCellRenderer leftPaddingRenderer = new DefaultTableCellRenderer();
+    leftPaddingRenderer.setHorizontalAlignment(SwingConstants.LEFT);
+    leftPaddingRenderer.setBorder(new EmptyBorder(0, 10, 0, 10));
+
+    DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
+    centerRenderer.setHorizontalAlignment(SwingConstants.CENTER);
+
+    DefaultTableCellRenderer rightPaddingRenderer = new DefaultTableCellRenderer();
+    rightPaddingRenderer.setHorizontalAlignment(SwingConstants.RIGHT);
+    rightPaddingRenderer.setBorder(new EmptyBorder(0, 10, 0, 10));
+
+    // --- Gán renderer cho từng cột ---
+    for (int i = 0; i < tblHoaDon.getColumnCount(); i++) {
+        tblHoaDon.getColumnModel().getColumn(i)
+               .setCellRenderer(leftPaddingRenderer);
+    }
+    tblHoaDon.getColumnModel().getColumn(0)
+           .setCellRenderer(centerRenderer);         // STT căn giữa
+    tblHoaDon.getColumnModel().getColumn(4)
+           .setCellRenderer(rightPaddingRenderer);  // Tổng Tiền căn phải
+
+    JScrollPane scrollPane = new JScrollPane(tblHoaDon);
+    scrollPane.setBorder(BorderFactory.createCompoundBorder(
+        BorderFactory.createLineBorder(BORDER_COLOR),
+        new EmptyBorder(1,1,1,1)
+    ));
+    scrollPane.getViewport().setBackground(WHITE_COLOR);
+
+    JPanel tableContainerPanel = new JPanel(new BorderLayout());
+    tableContainerPanel.setBackground(APP_BACKGROUND);
+    tableContainerPanel.setBorder(new EmptyBorder(0,20,20,20));
+    tableContainerPanel.add(scrollPane, BorderLayout.CENTER);
+
+    tblHoaDon.addMouseListener(new MouseAdapter() {
+        public void mouseClicked(MouseEvent evt) {
+            if (evt.getClickCount() == 2) {
+                int selectedRow = tblHoaDon.getSelectedRow();
+                if (selectedRow >= 0) {
+                    String maHoaDon = (String) hoaDonTableModel.getValueAt(selectedRow, 1);
+                    ThanhToanHoaDon chiTietHD = new ThanhToanHoaDon(maHoaDon, DanhSachHoaDon.this.ownerFrame);
+                    chiTietHD.setVisible(true);
+                    if (ownerFrame != null) ownerFrame.setEnabled(false);
+                    DanhSachHoaDon.this.setEnabled(false);
+
+                    chiTietHD.addWindowListener(new WindowAdapter() {
+                        @Override
+                        public void windowClosed(WindowEvent e) {
+                            if (ownerFrame != null) ownerFrame.setEnabled(true);
+                            DanhSachHoaDon.this.setEnabled(true);
+                            loadDanhSachHoaDonChoKhachHang(txtSearch.getText().trim());
+                            DanhSachHoaDon.this.requestFocus();
+                        }
+                    });
                 }
             }
-        });
+        }
+    });
 
-        add(titlePanel, BorderLayout.NORTH);
-        
-        JPanel mainContentPanel = new JPanel(new BorderLayout(0,15));
-        mainContentPanel.setBackground(APP_BACKGROUND);
-        mainContentPanel.add(topActionsPanel, BorderLayout.NORTH);
-        mainContentPanel.add(tableContainerPanel, BorderLayout.CENTER);
+    // --- Kết hợp tất cả và hiển thị ---
+    add(titlePanel, BorderLayout.NORTH);
+    JPanel mainContentPanel = new JPanel(new BorderLayout(0,15));
+    mainContentPanel.setBackground(APP_BACKGROUND);
+    mainContentPanel.add(topActionsPanel, BorderLayout.NORTH);
+    mainContentPanel.add(tableContainerPanel, BorderLayout.CENTER);
+    add(mainContentPanel, BorderLayout.CENTER);
+}
 
-        add(mainContentPanel, BorderLayout.CENTER);
-    }
     
     private void styleButton(JButton button, Color bgColor, Color fgColor) {
         button.setFont(FONT_BUTTON);
@@ -331,72 +344,91 @@ public class DanhSachHoaDon extends javax.swing.JFrame {
      * @param searchTerm Từ khóa tìm kiếm. Nếu rỗng, tải tất cả hóa đơn của khách hàng.
      */
     private void loadDanhSachHoaDonChoKhachHang(String searchTerm) {
-        System.out.println("Đang tải hóa đơn cho MAKH: " + this.currentMaKH + " với từ khóa: '" + searchTerm + "'");
-        hoaDonTableModel.setRowCount(0); // Xóa dữ liệu cũ trên bảng
-        
-        // Kiểm tra MaKH trước khi truy vấn
-        if (this.currentMaKH == null || this.currentMaKH.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Không thể tải hóa đơn: Mã khách hàng không hợp lệ.", "Lỗi Xác Thực Người Dùng", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
+    hoaDonTableModel.setRowCount(0);
 
-        Connection conn = null;
-        PreparedStatement pstmt = null;
-        ResultSet rs = null;
+    if (this.currentMaKH == null || this.currentMaKH.isEmpty()) {
+        JOptionPane.showMessageDialog(this,
+            "Không thể tải hóa đơn: thông tin người dùng không hợp lệ.",
+            "Lỗi", JOptionPane.ERROR_MESSAGE);
+        return;
+    }
 
-        String sql = "SELECT hd.MAHOADON, hd.NGAYLAP, hd.TONGTIEN, hd.TRANGTHAI " +
-                     "FROM HOADON hd " +
-                     "WHERE hd.MAKH = ? "; // Lọc theo MAKH của người dùng hiện tại
+    String sql = ""
+      + "SELECT hd.MAHOADON, hd.LOAIHOADON, hd.NGAYLAP, hd.TONGTIEN, hd.TRANGTHAI "
+      + "FROM HOADON hd "
+      + "WHERE hd.MAKH = ? "
+      + "  AND hd.LOAIHOADON IN ('VE_XE','VE_BAO_DUONG') ";
+    if (searchTerm != null && !searchTerm.isEmpty()) {
+        sql += ""
+          + "AND (UPPER(hd.MAHOADON) LIKE UPPER(?) "
+          + " OR TO_CHAR(hd.NGAYLAP, 'DD/MM/YYYY') LIKE ? "
+          + " OR UPPER(hd.TRANGTHAI) LIKE UPPER(?)) ";
+    }
+    sql += "ORDER BY hd.NGAYLAP DESC";
 
+    try (Connection conn = ConnectionOracle.getOracleConnection();
+         PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+        int idx = 1;
+        pstmt.setString(idx++, this.currentMaKH);
         if (searchTerm != null && !searchTerm.isEmpty()) {
-            // Thêm điều kiện tìm kiếm nếu searchTerm không rỗng
-            sql += "AND (UPPER(hd.MAHOADON) LIKE UPPER(?) OR TO_CHAR(hd.NGAYLAP, 'DD/MM/YYYY') LIKE ? OR UPPER(hd.TRANGTHAI) LIKE UPPER(?)) ";
+            String pattern = "%" + searchTerm + "%";
+            pstmt.setString(idx++, pattern);
+            pstmt.setString(idx++, pattern);
+            pstmt.setString(idx++, pattern);
         }
-        sql += "ORDER BY hd.NGAYLAP DESC"; // Sắp xếp theo ngày lập giảm dần
 
-        try {
-            conn = ConnectionOracle.getOracleConnection();
-            pstmt = conn.prepareStatement(sql);
-            int paramIndex = 1;
-            pstmt.setString(paramIndex++, this.currentMaKH); // Gán giá trị cho MAKH
-
-            if (searchTerm != null && !searchTerm.isEmpty()) {
-                String searchPattern = "%" + searchTerm + "%";
-                pstmt.setString(paramIndex++, searchPattern); // Cho MAHOADON
-                pstmt.setString(paramIndex++, searchPattern); // Cho NGAYLAP (đã format thành chuỗi)
-                pstmt.setString(paramIndex++, "%" + searchTerm.toUpperCase() + "%"); // Cho TRANGTHAI
-            }
-
-            rs = pstmt.executeQuery();
-            int stt = 1; // Số thứ tự
+        try (ResultSet rs = pstmt.executeQuery()) {
+            int stt = 1;
+            SimpleDateFormat df = new SimpleDateFormat("dd/MM/yyyy HH:mm");
             while (rs.next()) {
                 Vector<Object> row = new Vector<>();
-                row.add(String.valueOf(stt++));
+                row.add(stt++);  // STT
                 row.add(rs.getString("MAHOADON"));
-                Date ngayLap = rs.getTimestamp("NGAYLAP"); // Lấy NGAYLAP kiểu Timestamp
-                row.add(ngayLap != null ? dateTimeFormatter.format(ngayLap) : "N/A"); // Format ngày giờ
-                row.add(currencyFormatter.format(rs.getDouble("TONGTIEN"))); // Format tiền tệ
-                String trangThai = rs.getString("TRANGTHAI");
-                row.add(trangThai != null ? trangThai.toUpperCase() : "N/A"); // Chuyển trạng thái sang chữ hoa
+                row.add(rs.getString("LOAIHOADON"));
+                row.add(df.format(rs.getTimestamp("NGAYLAP")));
+                double tong;
+                try {
+                    tong = computeInvoiceTotal(conn, rs.getString("MAHOADON"));
+                } catch (SQLException e) {
+                    tong = rs.getDouble("TONGTIEN");  // fallback
+                }
+                row.add(currencyFormatter.format(tong));
+                row.add(rs.getString("TRANGTHAI"));                          // Trạng thái
                 hoaDonTableModel.addRow(row);
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Lỗi khi tải danh sách hóa đơn: " + e.getMessage(), "Lỗi SQL", JOptionPane.ERROR_MESSAGE);
-        } catch (ClassNotFoundException e) { // Bắt lỗi nếu ConnectionOracle.getOracleConnection() ném ClassNotFoundException
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Lỗi driver Oracle: " + e.getMessage(), "Lỗi Driver", JOptionPane.ERROR_MESSAGE);
-        } finally {
-            // Đóng các resource
-            try {
-                if (rs != null) rs.close();
-                if (pstmt != null) pstmt.close();
-                if (conn != null) conn.close();
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
+        }
+    } catch (SQLException | ClassNotFoundException ex) {
+        ex.printStackTrace();
+        JOptionPane.showMessageDialog(this,
+            "Lỗi khi tải hóa đơn: " + ex.getMessage(),
+            "Lỗi SQL", JOptionPane.ERROR_MESSAGE);
+    }
+}
+
+/**
+ * Tính lại tổng hóa đơn từ bảng CHITIETHOADON (dù VE_XE hay VE_BAO_DUONG).
+ */
+private double computeInvoiceTotal(Connection conn, String maHoaDon) throws SQLException {
+    String sql =
+        "SELECT SUM( CASE " +
+        "    WHEN c.MADVBAODUONG IS NOT NULL THEN c.SOLUONG * d.GIA " +
+        "    ELSE vg.PHIGUIXE " +
+        "  END) AS TONG " +
+        "FROM CHITIETHOADON c " +
+        "LEFT JOIN DICHVUBAODUONG d ON c.MADVBAODUONG = d.MADVBAODUONG " +
+        "LEFT JOIN VEGUIXE vg         ON c.MAVEXE         = vg.MAVEXE " +
+        "WHERE c.MAHOADON = ?";
+    try (PreparedStatement ps = conn.prepareStatement(sql)) {
+        ps.setString(1, maHoaDon);
+        try (ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) return rs.getDouble("TONG");
         }
     }
+    return 0;
+}
+
+
 
     // Main method chỉ để test độc lập (nếu cần) - Cần CustomerHomePage giả lập
     public static void main(String args[]) {
